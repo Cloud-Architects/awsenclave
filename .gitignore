@@ -1,0 +1,7 @@
+.idea
+target
+basic_command1.sh
+basic_command2.sh
+host_key_pair.json
+*.iml
+*.pem
