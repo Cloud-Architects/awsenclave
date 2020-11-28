@@ -149,9 +149,6 @@ public class ParentSetup {
             out.close();
 
             out = new PrintStream(new FileOutputStream(new File(filename2)));
-            out.println("echo \"vm.nr_hugepages=1536\" | sudo tee /etc/sysctl.d/99-nitro.conf; sudo sysctl -p /etc/sysctl.d/99-nitro.conf");
-            out.println("sudo grep Huge /proc/meminfo");
-
             out.println("nitro-cli --version");
             out.println("sudo systemctl start nitro-enclaves-allocator.service && sudo systemctl enable nitro-enclaves-allocator.service");
             out.println("sudo systemctl start docker && sudo systemctl enable docker");
@@ -161,8 +158,10 @@ public class ParentSetup {
             out.println("docker build . -t enclave-image:latest");
 
             out.println("nitro-cli build-enclave --docker-uri enclave-image:latest  --output-file sample.eif");
+            out.println("echo 'vm.nr_hugepages=1536' | sudo tee /etc/sysctl.d/99-nitro.conf; sudo sysctl -p /etc/sysctl.d/99-nitro.conf");
+            out.println("sudo grep Huge /proc/meminfo");
             out.println("nitro-cli run-enclave --cpu-count 2 --memory 3072 --eif-path sample.eif --enclave-cid 10");
-            out.println("nitro-cli console --enclave-id 10");
+            out.println("nitro-cli describe-enclaves");
             out.println("exit");
             out.close();
         } catch (Exception e) {
