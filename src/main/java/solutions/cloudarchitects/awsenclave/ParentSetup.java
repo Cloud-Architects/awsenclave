@@ -1,12 +1,12 @@
 package solutions.cloudarchitects.awsenclave;
 
 import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.ec2.model.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jcraft.jsch.JSchException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import solutions.cloudarchitects.awsenclave.model.Ec2Instance;
 
 import java.io.*;
 import java.util.Collections;
@@ -20,16 +20,89 @@ public class ParentSetup {
             "resolve:ssm:/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2";
     private static final String HOST_PRIVATE_KEY_NAME = "host_key_pair.json";
     private static final String DEFAULT_SUBNET_ID = "subnet-0c7e359db7c0be7fd"; // auto assign public IP: true
-    private static final String filename1 = "basic_commands1.sh";
-    private static final String filename2 = "basic_commands2.sh";
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final Logger LOG = LoggerFactory.getLogger(CommandRunner.class);
 
-    public void setupParent() {
-        AmazonEC2 amazonEC2Client = AmazonEC2ClientBuilder.defaultClient();
+    private final AmazonEC2 amazonEC2Client;
+    private final CommandRunner commandRunner;
 
-        KeyPair keyPair = loadKey(amazonEC2Client);
-        String securityGroupName = getSecurityGroupName(amazonEC2Client);
+    public ParentSetup(AmazonEC2 amazonEC2Client) {
+        this(amazonEC2Client, new CommandRunner());
+    }
+
+    public ParentSetup(AmazonEC2 amazonEC2Client, CommandRunner commandRunner) {
+        this.amazonEC2Client = amazonEC2Client;
+        this.commandRunner = commandRunner;
+    }
+
+    public void setupParent(KeyPair keyPair, Ec2Instance ec2Instance) {
+        String setupScript = "echo \"Programmatically SSHed into the instance.\"\n" +
+                "sudo amazon-linux-extras enable aws-nitro-enclaves-cli\n" +
+                "sudo amazon-linux-extras enable docker\n" +
+                "sudo yum install docker aws-nitro-enclaves-cli aws-nitro-enclaves-cli-devel -y\n" +
+                "sudo usermod -aG ne " + EC2_USER + "\n" +
+                "sudo usermod -aG docker " + EC2_USER + "\n" +
+                "echo \"vm.nr_hugepages=1536\" | sudo tee /etc/sysctl.d/99-nitro.conf; sudo sysctl -p /etc/sysctl.d/99-nitro.conf\n" +
+                "sudo reboot\n" +
+                "exit\n";
+
+        try {
+            LOG.info("waiting for basic setup");
+            commandRunner.runCommand(keyPair, ec2Instance.getDomainAddress(), setupScript);
+        } catch (JSchException | IOException e) {
+            throw new IllegalStateException(e.getMessage(), e);
+        }
+    }
+
+    public void runSampleEnclave(KeyPair keyPair, Ec2Instance ec2Instance) {
+        String setupScript = "nitro-cli --version\n" +
+                "sudo systemctl start nitro-enclaves-allocator.service && sudo systemctl enable nitro-enclaves-allocator.service\n" +
+                "sudo systemctl start docker && sudo systemctl enable docker\n" +
+
+                "touch run.sh\n" +
+                "echo \"#!/bin/sh\" >> run.sh\n" +
+                "echo \"python3 /app/server.py\" >> run.sh\n" +
+
+                "touch server.py\n" +
+                "echo \"import socket\" >> server.py\n" +
+                "echo \"client_socket = socket.socket(socket.AF_VSOCK, socket.SOCK_STREAM)\" >> server.py\n" +
+                "echo \"cid = socket.VMADDR_CID_ANY\" >> server.py\n" +
+                "echo \"client_port = 5000\" >> server.py\n" +
+                "echo \"client_socket.bind((cid, client_port))\" >> server.py\n" +
+                "echo \"client_socket.listen()\n" +
+                "echo \"while True:\" >> server.py\n" +
+                "echo \"    (conn, (remote_cid, remote_port)) = client_socket.accept()\" >> server.py\n" +
+                "echo \"    conn.close()\" >> server.py\n" +
+                "echo \"\" >> server.py\n" +
+
+                "touch Dockerfile\n" +
+                "echo \"FROM amazonlinux\" >> Dockerfile\n" +
+                "echo \"RUN yum install python3 net-tools -y\" >> Dockerfile\n" +
+                "echo \"WORKDIR /app\" >> Dockerfile\n" +
+                "echo \"COPY server.py ./\" >> Dockerfile\n" +
+                "echo \"COPY run.sh ./\" >> Dockerfile\n" +
+                "echo \"RUN chmod +x run.sh\" >> Dockerfile\n" +
+                "echo \"CMD /app/run.sh\" >> Dockerfile\n" +
+
+                "docker build . -t enclave-image:latest\n" +
+                "nitro-cli build-enclave --docker-uri enclave-image:latest  --output-file sample.eif\n" +
+                "echo 'vm.nr_hugepages=1536' | sudo tee /etc/sysctl.d/99-nitro.conf; sudo sysctl -p /etc/sysctl.d/99-nitro.conf\n" +
+                "sudo grep Huge /proc/meminfo\n" +
+                "nitro-cli run-enclave --cpu-count 2 --memory 3072 --eif-path sample.eif --enclave-cid 10\n" +
+                "nitro-cli describe-enclaves\n" +
+                "exit\n";
+
+        CommandRunner commandRunner = new CommandRunner();
+        try {
+            LOG.info("running enclave");
+            commandRunner.runCommand(keyPair, ec2Instance.getDomainAddress(), setupScript);
+        } catch (JSchException | IOException e) {
+            throw new IllegalStateException(e.getMessage(), e);
+        }
+    }
+
+    public Ec2Instance createParent(KeyPair keyPair) {
+        String securityGroupName = getSecurityGroupName();
 
         RunInstancesRequest runInstancesRequest =
                 new RunInstancesRequest()
@@ -67,25 +140,10 @@ public class ParentSetup {
             }
         }
 
-        createShellScript();
-
-        CommandRunner commandRunner = new CommandRunner();
-        try {
-            LOG.info("waiting for basic setup");
-            commandRunner.runCommand(keyPair, publicDNS, filename1);
-            LOG.info("running enclave");
-            commandRunner.runCommand(keyPair, publicDNS, filename2);
-        } catch (JSchException | IOException e) {
-            e.printStackTrace();
-        } finally {
-            TerminateInstancesRequest tir = new TerminateInstancesRequest(Collections.singletonList(createdInstanceId));
-            LOG.info("terminating instance: " + createdInstanceId);
-            amazonEC2Client.terminateInstances(tir);
-        }
+        return new Ec2Instance(createdInstanceId, publicDNS);
     }
 
-
-    private String getSecurityGroupName(AmazonEC2 amazonEC2Client) {
+    private String getSecurityGroupName() {
         try {
             amazonEC2Client.describeSecurityGroups(new DescribeSecurityGroupsRequest()
                     .withGroupNames(DEFAULT_SECURITY_GROUP_NAME));
@@ -115,7 +173,7 @@ public class ParentSetup {
         }
     }
 
-    private KeyPair loadKey(AmazonEC2 amazonEC2Client) {
+    public KeyPair loadKey() {
         try {
             return MAPPER.readValue(new File(HOST_PRIVATE_KEY_NAME), KeyPair.class);
         } catch (IOException e) {
@@ -131,41 +189,6 @@ public class ParentSetup {
                 throw new IllegalStateException(ioException.getMessage(), ioException);
             }
             return keyPair;
-        }
-    }
-
-    private void createShellScript() {
-        try {
-            PrintStream out = new PrintStream(new FileOutputStream(new File(filename1)));
-            out.println("echo \"Programmatically SSHed into the instance.\"");
-            out.println("sudo amazon-linux-extras enable aws-nitro-enclaves-cli");
-            out.println("sudo amazon-linux-extras enable docker");
-            out.println("sudo yum install docker aws-nitro-enclaves-cli aws-nitro-enclaves-cli-devel -y");
-            out.println("sudo usermod -aG ne " + EC2_USER);
-            out.println("sudo usermod -aG docker " + EC2_USER);
-            out.println("echo \"vm.nr_hugepages=1536\" | sudo tee /etc/sysctl.d/99-nitro.conf; sudo sysctl -p /etc/sysctl.d/99-nitro.conf");
-            out.println("sudo reboot");
-            out.println("exit");
-            out.close();
-
-            out = new PrintStream(new FileOutputStream(new File(filename2)));
-            out.println("nitro-cli --version");
-            out.println("sudo systemctl start nitro-enclaves-allocator.service && sudo systemctl enable nitro-enclaves-allocator.service");
-            out.println("sudo systemctl start docker && sudo systemctl enable docker");
-
-            out.println("touch Dockerfile");
-            out.println("echo \"FROM epahomov/docker-spark:lightweighted\n\" >> Dockerfile");
-            out.println("docker build . -t enclave-image:latest");
-
-            out.println("nitro-cli build-enclave --docker-uri enclave-image:latest  --output-file sample.eif");
-            out.println("echo 'vm.nr_hugepages=1536' | sudo tee /etc/sysctl.d/99-nitro.conf; sudo sysctl -p /etc/sysctl.d/99-nitro.conf");
-            out.println("sudo grep Huge /proc/meminfo");
-            out.println("nitro-cli run-enclave --cpu-count 2 --memory 3072 --eif-path sample.eif --enclave-cid 10");
-            out.println("nitro-cli describe-enclaves");
-            out.println("exit");
-            out.close();
-        } catch (Exception e) {
-            LOG.warn(e.getMessage(), e);
         }
     }
 }

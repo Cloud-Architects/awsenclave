@@ -18,13 +18,13 @@ import static solutions.cloudarchitects.awsenclave.ParentSetup.EC2_USER;
 public class CommandRunner {
     private static final Logger LOG = LoggerFactory.getLogger(CommandRunner.class);
 
-    public void runCommand(KeyPair keyPair, String publicDNS, String filename) throws IOException, JSchException {
-        runCommandRetry(keyPair, publicDNS, filename, 10);
+    public void runCommand(KeyPair keyPair, String publicDNS, String script) throws IOException, JSchException {
+        runCommandRetry(keyPair, publicDNS, script, 10);
     }
 
-    private void runCommandRetry(KeyPair keyPair, String publicDNS, String filename, int retry) throws JSchException, IOException {
+    private void runCommandRetry(KeyPair keyPair, String publicDNS, String script, int retry) throws JSchException, IOException {
         try {
-            executeCommand(keyPair, publicDNS, filename);
+            executeCommand(keyPair, publicDNS, script);
         } catch (JSchException | ConnectException connectException) {
             if(retry > 0) {
                 try {
@@ -33,12 +33,12 @@ public class CommandRunner {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                runCommandRetry(keyPair, publicDNS, filename, retry - 1);
+                runCommandRetry(keyPair, publicDNS, script, retry - 1);
             }
         }
     }
 
-    private void executeCommand(KeyPair keyPair, String publicDNS, String filename) throws JSchException, IOException {
+    private void executeCommand(KeyPair keyPair, String publicDNS, String script) throws JSchException, IOException {
         JSch jsch = new JSch();
         try {
             jsch.addIdentity(keyPair.getKeyName(), keyPair.getKeyMaterial().getBytes(StandardCharsets.UTF_8),
@@ -52,18 +52,14 @@ public class CommandRunner {
         session.setConfig(configuration);
 
         session.connect();
-        runShell(session, filename);
+        runShell(session, script);
         session.disconnect();
     }
 
-    private void runShell(Session session, String filename) throws JSchException, IOException {
+    private void runShell(Session session, String script) throws JSchException {
         Channel channel = session.openChannel("shell");
         channel.setOutputStream(System.out, true);
-        File initScript = new File(filename);
-        FileInputStream fin = new FileInputStream(initScript);
-        byte[] fileContent = new byte[(int) initScript.length()];
-        fin.read(fileContent);
-        channel.setInputStream(new ByteArrayInputStream(fileContent));
+        channel.setInputStream(new ByteArrayInputStream(script.getBytes(StandardCharsets.UTF_8)));
         channel.connect();
 
         while(!channel.isClosed()) {
