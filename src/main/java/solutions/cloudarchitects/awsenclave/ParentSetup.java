@@ -60,29 +60,28 @@ public class ParentSetup {
                 "sudo systemctl start docker && sudo systemctl enable docker\n" +
 
                 "touch run.sh\n" +
-                "echo \"#!/bin/sh\" >> run.sh\n" +
-                "echo \"python3 /app/server.py\" >> run.sh\n" +
+                "echo '#!/bin/sh' >> run.sh\n" +
+                "echo 'python3 /app/server.py' >> run.sh\n" +
 
                 "touch server.py\n" +
-                "echo \"import socket\" >> server.py\n" +
-                "echo \"client_socket = socket.socket(socket.AF_VSOCK, socket.SOCK_STREAM)\" >> server.py\n" +
-                "echo \"cid = socket.VMADDR_CID_ANY\" >> server.py\n" +
-                "echo \"client_port = 5000\" >> server.py\n" +
-                "echo \"client_socket.bind((cid, client_port))\" >> server.py\n" +
-                "echo \"client_socket.listen()\n" +
-                "echo \"while True:\" >> server.py\n" +
-                "echo \"    (conn, (remote_cid, remote_port)) = client_socket.accept()\" >> server.py\n" +
-                "echo \"    conn.close()\" >> server.py\n" +
-                "echo \"\" >> server.py\n" +
+                "echo 'import socket' >> server.py\n" +
+                "echo 'client_socket = socket.socket(socket.AF_VSOCK, socket.SOCK_STREAM)' >> server.py\n" +
+                "echo 'cid = socket.VMADDR_CID_ANY' >> server.py\n" +
+                "echo 'client_port = 5000' >> server.py\n" +
+                "echo 'client_socket.bind((cid, client_port))' >> server.py\n" +
+                "echo 'client_socket.listen()' >> server.py\n" +
+                "echo 'while True:' >> server.py\n" +
+                "echo '    (conn, (remote_cid, remote_port)) = client_socket.accept()' >> server.py\n" +
+                "echo '    conn.close()' >> server.py\n" +
 
                 "touch Dockerfile\n" +
-                "echo \"FROM amazonlinux\" >> Dockerfile\n" +
-                "echo \"RUN yum install python3 net-tools -y\" >> Dockerfile\n" +
-                "echo \"WORKDIR /app\" >> Dockerfile\n" +
-                "echo \"COPY server.py ./\" >> Dockerfile\n" +
-                "echo \"COPY run.sh ./\" >> Dockerfile\n" +
-                "echo \"RUN chmod +x run.sh\" >> Dockerfile\n" +
-                "echo \"CMD /app/run.sh\" >> Dockerfile\n" +
+                "echo 'FROM amazonlinux' >> Dockerfile\n" +
+                "echo 'RUN yum install python3 net-tools -y' >> Dockerfile\n" +
+                "echo 'WORKDIR /app' >> Dockerfile\n" +
+                "echo 'COPY server.py ./' >> Dockerfile\n" +
+                "echo 'COPY run.sh ./' >> Dockerfile\n" +
+                "echo 'RUN chmod +x run.sh' >> Dockerfile\n" +
+                "echo 'CMD /app/run.sh' >> Dockerfile\n" +
 
                 "docker build . -t enclave-image:latest\n" +
                 "nitro-cli build-enclave --docker-uri enclave-image:latest  --output-file sample.eif\n" +
