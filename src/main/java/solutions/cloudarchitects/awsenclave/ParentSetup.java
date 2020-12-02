@@ -71,8 +71,13 @@ public class ParentSetup {
                 "echo 'client_socket.bind((cid, client_port))' >> server.py\n" +
                 "echo 'client_socket.listen()' >> server.py\n" +
                 "echo 'while True:' >> server.py\n" +
-                "echo '    (conn, (remote_cid, remote_port)) = client_socket.accept()' >> server.py\n" +
-                "echo '    conn.close()' >> server.py\n" +
+                "echo '       try:' >> server.py\n" +
+                "echo '               (conn, (remote_cid, remote_port)) = client_socket.accept()' >> server.py\n" +
+                "echo '               req = conn.read(4096)' >> server.py\n" +
+                "echo '               conn.sendall(b\"Got: \" + req)' >> server.py\n" +
+                "echo '               conn.close()' >> server.py\n" +
+                "echo '       except:' >> server.py\n" +
+                "echo '               print(\"An exception occurred\")' >> server.py\n" +
 
                 "touch Dockerfile\n" +
                 "echo 'FROM amazonlinux' >> Dockerfile\n" +
