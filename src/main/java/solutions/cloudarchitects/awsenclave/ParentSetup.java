@@ -61,7 +61,7 @@ public class ParentSetup {
 
                 "touch run.sh\n" +
                 "echo '#!/bin/sh' >> run.sh\n" +
-                "echo 'python3 /app/server.py' >> run.sh\n" +
+                "echo 'python3 /app/client.py' >> run.sh\n" +
 
                 "touch server.py\n" +
                 "echo 'import socket' >> server.py\n" +
@@ -78,6 +78,16 @@ public class ParentSetup {
                 "echo '               conn.close()' >> server.py\n" +
                 "echo '       except:' >> server.py\n" +
                 "echo '               print(\"An exception occurred\")' >> server.py\n" +
+
+                "touch client.py\n" +
+                "echo 'import socket' >> client.py\n" +
+                "echo 'client_socket = socket.socket(socket.AF_VSOCK, socket.SOCK_STREAM)' >> client.py\n" +
+                "echo 'cid = socket.VMADDR_CID_HOST' >> client.py\n" +
+                "echo 'client_port = 5000' >> client.py\n" +
+                "echo 'client_socket.connect((cid, client_port))' >> client.py\n" +
+                "echo 'client_socket.send(b\"hello world\")' >> client.py\n" +
+                "echo 'response = client_socket.recv(65536)' >> client.py\n" +
+                "echo 'client_socket.close()' >> client.py\n" +
 
                 "touch Dockerfile\n" +
                 "echo 'FROM amazonlinux' >> Dockerfile\n" +
@@ -117,7 +127,7 @@ public class ParentSetup {
                         .withKeyName(keyPair.getKeyName())
                         .withSubnetId(DEFAULT_SUBNET_ID)
                         .withEnclaveOptions(new EnclaveOptionsRequest()
-                                .withEnabled(true));
+                                .withEnabled(true));    // TODO: make use of ready AMI - https://docs.aws.amazon.com/enclaves/latest/user/developing-applications.html#dev-ami
 
         LOG.info("creating an instance with an enclave");
         RunInstancesResult result = amazonEC2Client.runInstances(

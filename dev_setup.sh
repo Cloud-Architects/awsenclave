@@ -15,9 +15,9 @@ sudo alternatives --config javac
 git clone https://github.com/Cloud-Architects/vsockj
 cd vsockj
 mvn install
-mvn -f vsockj-example/pom.xml compile exec:exec
+mvn -f vsockj-example/pom.xml compile exec:exec -DclassName=ClientDemo
 
-nano vsockj-example/src/main/java/solutions/cloudarchitects/vsockj/Demo.java
+nano vsockj-example/src/main/java/solutions/cloudarchitects/vsockj/ServerDemo.java
 nitro-cli run-enclave --cpu-count 2 --memory 3072 --eif-path ../sample.eif --enclave-cid 10
 nitro-cli terminate-enclave --all
 nitro-cli describe-enclaves
