@@ -75,7 +75,8 @@ public class ParentSetup {
                 "echo 'while True:' >> server.py\n" +
                 "echo '       try:' >> server.py\n" +
                 "echo '               (conn, (remote_cid, remote_port)) = client_socket.accept()' >> server.py\n" +
-                "echo '               req = conn.read(4096)' >> server.py\n" +
+                "echo '               req = conn.recv(4096)' >> server.py\n" +
+                "echo '               print(req)' >> server.py\n" +
                 "echo '               conn.sendall(b\"Got: \" + req)' >> server.py\n" +
                 "echo '               conn.close()' >> server.py\n" +
                 "echo '       except:' >> server.py\n" +
@@ -96,6 +97,7 @@ public class ParentSetup {
                 "echo 'RUN yum install python3 net-tools -y' >> Dockerfile\n" +
                 "echo 'WORKDIR /app' >> Dockerfile\n" +
                 "echo 'COPY server.py ./' >> Dockerfile\n" +
+                "echo 'COPY client.py ./' >> Dockerfile\n" +
                 "echo 'COPY run.sh ./' >> Dockerfile\n" +
                 "echo 'RUN chmod +x run.sh' >> Dockerfile\n" +
                 "echo 'CMD /app/run.sh' >> Dockerfile\n" +
