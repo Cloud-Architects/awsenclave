@@ -1,12 +1,12 @@
 package solutions.cloudarchitects.awsenclave;
 
-import com.amazonaws.services.ec2.model.KeyPair;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import solutions.cloudarchitects.awsenclave.model.KeyPair;
 
 import java.io.*;
 import java.net.ConnectException;
@@ -22,10 +22,10 @@ public class CommandRunner {
         runCommandRetry(keyPair, publicDNS, script, 10);
     }
 
-    private void runCommandRetry(KeyPair keyPair, String publicDNS, String script, int retry) throws JSchException, IOException {
+    private void runCommandRetry(KeyPair keyPair, String publicDNS, String script, int retry) throws JSchException {
         try {
             executeCommand(keyPair, publicDNS, script);
-        } catch (JSchException | ConnectException connectException) {
+        } catch (JSchException connectException) {
             if(retry > 0) {
                 try {
                     LOG.info("waiting to connect");
@@ -38,7 +38,7 @@ public class CommandRunner {
         }
     }
 
-    private void executeCommand(KeyPair keyPair, String publicDNS, String script) throws JSchException, IOException {
+    private void executeCommand(KeyPair keyPair, String publicDNS, String script) throws JSchException {
         JSch jsch = new JSch();
         try {
             jsch.addIdentity(keyPair.getKeyName(), keyPair.getKeyMaterial().getBytes(StandardCharsets.UTF_8),

@@ -1,15 +1,18 @@
 package solutions.cloudarchitects.awsenclave;
 
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.model.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jcraft.jsch.JSchException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.ec2.Ec2Client;
+import software.amazon.awssdk.services.ec2.model.*;
 import solutions.cloudarchitects.awsenclave.model.Ec2Instance;
+import solutions.cloudarchitects.awsenclave.model.KeyPair;
 
 import java.io.*;
 import java.util.Collections;
+import java.util.Optional;
 
 public class ParentSetup {
     public static final String EC2_USER = "ec2-user";
@@ -23,19 +26,19 @@ public class ParentSetup {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final Logger LOG = LoggerFactory.getLogger(CommandRunner.class);
 
-    private final AmazonEC2 amazonEC2Client;
+    private final Ec2Client amazonEC2Client;
     private final CommandRunner commandRunner;
 
-    public ParentSetup(AmazonEC2 amazonEC2Client) {
+    public ParentSetup(Ec2Client amazonEC2Client) {
         this(amazonEC2Client, new CommandRunner());
     }
 
-    public ParentSetup(AmazonEC2 amazonEC2Client, CommandRunner commandRunner) {
+    public ParentSetup(Ec2Client amazonEC2Client, CommandRunner commandRunner) {
         this.amazonEC2Client = amazonEC2Client;
         this.commandRunner = commandRunner;
     }
 
-    public void setupParent(KeyPair keyPair, Ec2Instance ec2Instance) {
+    private void setupParent(KeyPair keyPair, String domainAddress) {
         String setupScript = "echo \"Programmatically SSHed into the instance.\"\n" +
                 "sudo amazon-linux-extras enable aws-nitro-enclaves-cli\n" +
                 "sudo amazon-linux-extras enable docker\n" +
@@ -45,10 +48,9 @@ public class ParentSetup {
                 "echo \"vm.nr_hugepages=1536\" | sudo tee /etc/sysctl.d/99-nitro.conf; sudo sysctl -p /etc/sysctl.d/99-nitro.conf\n" +
                 "sudo reboot\n" +
                 "exit\n";
-
         try {
             LOG.info("waiting for basic setup");
-            commandRunner.runCommand(keyPair, ec2Instance.getDomainAddress(), setupScript);
+            commandRunner.runCommand(keyPair, domainAddress, setupScript);
         } catch (JSchException | IOException e) {
             throw new IllegalStateException(e.getMessage(), e);
         }
@@ -118,40 +120,47 @@ public class ParentSetup {
     public Ec2Instance createParent(KeyPair keyPair) {
         String securityGroupName = getSecurityGroupName();
 
-        RunInstancesRequest runInstancesRequest =
-                new RunInstancesRequest()
-                        .withImageId(SSM_RESOLVE_LATEST_AMAZON_LINUX_2)
-                        .withInstanceType(InstanceType.C5Xlarge)
-                        .withMinCount(1)
-                        .withMaxCount(1)
-                        .withKeyName(keyPair.getKeyName())
-                        .withSubnetId(DEFAULT_SUBNET_ID)
-                        .withEnclaveOptions(new EnclaveOptionsRequest()
-                                .withEnabled(true));    // TODO: make use of ready AMI - https://docs.aws.amazon.com/enclaves/latest/user/developing-applications.html#dev-ami
+        Region region = getRegion();
+        Optional<String> imageId = NitroEnclavesDeveloperAmi.getImageId(region);
+        RunInstancesRequest runInstancesRequest = RunInstancesRequest.builder()
+                .instanceType(InstanceType.C5_XLARGE)
+                .minCount(1)
+                .maxCount(1)
+                .keyName(keyPair.getKeyName())
+                .subnetId(DEFAULT_SUBNET_ID)
+                .enclaveOptions(EnclaveOptionsRequest.builder()
+                        .enabled(true)
+                        .build())
+                .imageId(imageId.orElse(SSM_RESOLVE_LATEST_AMAZON_LINUX_2))
+                .build();
 
         LOG.info("creating an instance with an enclave");
-        RunInstancesResult result = amazonEC2Client.runInstances(
+        RunInstancesResponse result = amazonEC2Client.runInstances(
                 runInstancesRequest);
-
         try {
             Thread.sleep(5_000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
-        String createdInstanceId = result.getReservation().getInstances().get(0)
-                .getInstanceId();
+        String createdInstanceId = result.instances().get(0)
+                .instanceId();
 
         String publicDNS = "";
         String publicIP = "";
-        for (Reservation reservation : amazonEC2Client.describeInstances().getReservations()) {
-            if (reservation.getInstances().get(0).getPrivateIpAddress() != null &&
-                    reservation.getInstances().get(0).getInstanceId().equals(createdInstanceId)) {
-                publicDNS = reservation.getInstances().get(0).getPublicDnsName();
-                publicIP = reservation.getInstances().get(0).getPublicIpAddress();
+        for (Reservation reservation : amazonEC2Client.describeInstances().reservations()) {
+            if (reservation.instances().get(0).privateIpAddress() != null &&
+                    reservation.instances().get(0).instanceId().equals(createdInstanceId)) {
+                publicDNS = reservation.instances().get(0).publicDnsName();
+                publicIP = reservation.instances().get(0).publicIpAddress();
                 LOG.info("Public DNS: " + publicDNS);
                 LOG.info("Public IP: " + publicIP);
             }
+        }
+
+        if (!imageId.isPresent()) {
+            LOG.info("Using region without prebuilt AMI, setting up development env manually, MAY contain errors");
+            setupParent(keyPair, publicDNS);
         }
 
         return new Ec2Instance(createdInstanceId, publicDNS);
@@ -159,27 +168,31 @@ public class ParentSetup {
 
     private String getSecurityGroupName() {
         try {
-            amazonEC2Client.describeSecurityGroups(new DescribeSecurityGroupsRequest()
-                    .withGroupNames(DEFAULT_SECURITY_GROUP_NAME));
+            amazonEC2Client.describeSecurityGroups(DescribeSecurityGroupsRequest.builder()
+                    .groupNames(DEFAULT_SECURITY_GROUP_NAME)
+                    .build());
             return DEFAULT_SECURITY_GROUP_NAME;
 
-        } catch (AmazonEC2Exception exception) {
-            CreateSecurityGroupRequest csgr = new CreateSecurityGroupRequest();
-            csgr.withGroupName(DEFAULT_SECURITY_GROUP_NAME).withDescription("created with awsenclave");
+        } catch (Ec2Exception exception) {
+            CreateSecurityGroupRequest csgr = CreateSecurityGroupRequest.builder()
+                    .groupName(DEFAULT_SECURITY_GROUP_NAME)
+                    .description("created with awsenclave")
+                    .build();
 
             amazonEC2Client.createSecurityGroup(csgr);
 
-            IpPermission ipPermission = new IpPermission();
-            ipPermission.withIpv4Ranges(Collections.singletonList(new IpRange().withCidrIp("0.0.0.0/0")))
-                    .withIpProtocol("tcp")
-                    .withFromPort(22)
-                    .withToPort(22);
+            IpPermission ipPermission = IpPermission.builder()
+                .ipRanges(Collections.singletonList(IpRange.builder().cidrIp("0.0.0.0/0").build()))
+                    .ipProtocol("tcp")
+                    .fromPort(22)
+                    .toPort(22)
+                    .build();
 
             AuthorizeSecurityGroupIngressRequest authorizeSecurityGroupIngressRequest =
-                    new AuthorizeSecurityGroupIngressRequest();
-
-            authorizeSecurityGroupIngressRequest.withGroupName("JavaSecurityGroup")
-                    .withIpPermissions(ipPermission);
+                    AuthorizeSecurityGroupIngressRequest.builder()
+                            .groupName("JavaSecurityGroup")
+                            .ipPermissions(ipPermission)
+                            .build();
 
             amazonEC2Client.authorizeSecurityGroupIngress(authorizeSecurityGroupIngressRequest);
 
@@ -191,12 +204,11 @@ public class ParentSetup {
         try {
             return MAPPER.readValue(new File(HOST_PRIVATE_KEY_NAME), KeyPair.class);
         } catch (IOException e) {
-            CreateKeyPairRequest createKeyPairRequest = new CreateKeyPairRequest();
-            createKeyPairRequest.withKeyName(DEFAULT_KEY_NAME);
-            CreateKeyPairResult createKeyPairResult =
-                    amazonEC2Client.createKeyPair(createKeyPairRequest);
-
-            KeyPair keyPair = createKeyPairResult.getKeyPair();
+            CreateKeyPairRequest createKeyPairRequest = CreateKeyPairRequest.builder()
+                    .keyName(DEFAULT_KEY_NAME)
+                    .build();
+            CreateKeyPairResponse createKeyPairResponse = amazonEC2Client.createKeyPair(createKeyPairRequest);
+            KeyPair keyPair = new KeyPair(createKeyPairResponse.keyMaterial(), createKeyPairResponse.keyName());
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(HOST_PRIVATE_KEY_NAME))) {
                 writer.write(MAPPER.writeValueAsString(keyPair));
             } catch (IOException ioException) {
@@ -204,5 +216,12 @@ public class ParentSetup {
             }
             return keyPair;
         }
+    }
+
+    private Region getRegion() {
+        amazonEC2Client.describeAvailabilityZones().availabilityZones().get(0).regionName();
+        return software.amazon.awssdk.regions.Region.of(
+                amazonEC2Client.describeAvailabilityZones().availabilityZones().get(0).regionName()
+        );
     }
 }
