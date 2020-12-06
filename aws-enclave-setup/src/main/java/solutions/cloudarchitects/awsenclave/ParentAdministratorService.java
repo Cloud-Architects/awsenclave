@@ -8,13 +8,15 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.*;
 import solutions.cloudarchitects.awsenclave.model.Ec2Instance;
+import solutions.cloudarchitects.awsenclave.model.EnclaveMeasurements;
 import solutions.cloudarchitects.awsenclave.model.KeyPair;
 
 import java.io.*;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
-public class ParentSetup {
+public class ParentAdministratorService {
     public static final String EC2_USER = "ec2-user";
 
     private static final String DEFAULT_KEY_NAME = "awsenclave";
@@ -29,18 +31,17 @@ public class ParentSetup {
     private final Ec2Client amazonEC2Client;
     private final CommandRunner commandRunner;
 
-    public ParentSetup(Ec2Client amazonEC2Client) {
+    public ParentAdministratorService(Ec2Client amazonEC2Client) {
         this(amazonEC2Client, new CommandRunner());
     }
 
-    public ParentSetup(Ec2Client amazonEC2Client, CommandRunner commandRunner) {
+    public ParentAdministratorService(Ec2Client amazonEC2Client, CommandRunner commandRunner) {
         this.amazonEC2Client = amazonEC2Client;
         this.commandRunner = commandRunner;
     }
 
     private void setupParent(KeyPair keyPair, String domainAddress) {
-        String setupScript = "echo \"Programmatically SSHed into the instance.\"\n" +
-                "sudo amazon-linux-extras enable aws-nitro-enclaves-cli\n" +
+        String setupScript = "sudo amazon-linux-extras enable aws-nitro-enclaves-cli\n" +
                 "sudo amazon-linux-extras enable docker\n" +
                 "sudo yum install docker aws-nitro-enclaves-cli aws-nitro-enclaves-cli-devel -y\n" +
                 "sudo usermod -aG ne " + EC2_USER + "\n" +
@@ -50,13 +51,13 @@ public class ParentSetup {
                 "exit\n";
         try {
             LOG.info("waiting for basic setup");
-            commandRunner.runCommand(keyPair, domainAddress, setupScript);
+            commandRunner.runCommand(keyPair, domainAddress, setupScript, false);
         } catch (JSchException | IOException e) {
             throw new IllegalStateException(e.getMessage(), e);
         }
     }
 
-    public void runSampleEnclave(KeyPair keyPair, Ec2Instance ec2Instance) {
+    public void prepareSampleEnclave(KeyPair keyPair, Ec2Instance ec2Instance) {
         String setupScript = "nitro-cli --version\n" +
                 "sudo systemctl start nitro-enclaves-allocator.service && sudo systemctl enable nitro-enclaves-allocator.service\n" +
                 "sudo systemctl start docker && sudo systemctl enable docker\n" +
@@ -103,17 +104,40 @@ public class ParentSetup {
                 "echo 'CMD /app/run.sh' >> Dockerfile\n" +
 
                 "docker build . -t enclave-image:latest\n" +
-                "nitro-cli build-enclave --docker-uri enclave-image:latest  --output-file sample.eif\n" +
+                "exit\n";
+
+        try {
+            LOG.info("running enclave");
+            commandRunner.runCommand(keyPair, ec2Instance.getDomainAddress(), setupScript, false);
+        } catch (JSchException | IOException e) {
+            throw new IllegalStateException(e.getMessage(), e);
+        }
+    }
+
+    public EnclaveMeasurements buildEnclave(KeyPair keyPair, Ec2Instance ec2Instance) {
+        String setupScript = "nitro-cli build-enclave --docker-uri enclave-image:latest  --output-file sample.eif\n" +
+                "exit\n";
+        try {
+            LOG.info("waiting for basic setup");
+            Optional<String> result = commandRunner
+                    .runCommand(keyPair, ec2Instance.getDomainAddress(), setupScript, true);
+            String logLines = result.orElseThrow(() -> new IllegalStateException("No enclave measurements"));
+            return EnclaveMeasurements.fromBuild(logLines);
+        } catch (JSchException | IOException e) {
+            throw new IllegalStateException(e.getMessage(), e);
+        }
+    }
+
+    public void runEnclave(KeyPair keyPair, Ec2Instance ec2Instance) {
+        String setupScript =
                 "echo 'vm.nr_hugepages=1536' | sudo tee /etc/sysctl.d/99-nitro.conf; sudo sysctl -p /etc/sysctl.d/99-nitro.conf\n" +
                 "sudo grep Huge /proc/meminfo\n" +
                 "nitro-cli run-enclave --cpu-count 2 --memory 3072 --eif-path sample.eif --enclave-cid 10\n" +
                 "nitro-cli describe-enclaves\n" +
                 "exit\n";
-
-        CommandRunner commandRunner = new CommandRunner();
         try {
-            LOG.info("running enclave");
-            commandRunner.runCommand(keyPair, ec2Instance.getDomainAddress(), setupScript);
+            LOG.info("waiting for basic setup");
+            commandRunner.runCommand(keyPair, ec2Instance.getDomainAddress(), setupScript, false);
         } catch (JSchException | IOException e) {
             throw new IllegalStateException(e.getMessage(), e);
         }
