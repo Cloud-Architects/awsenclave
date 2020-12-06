@@ -19,11 +19,11 @@ class Main {
         try {
             parentSetup.runSampleEnclave(keyPair, ec2Instance);
         } finally {
-//            TerminateInstancesRequest tir = TerminateInstancesRequest.builder()
-//                    .instanceIds(ec2Instance.getInstanceId())
-//                    .build();
-//            LOG.info("terminating instance: " + ec2Instance);
-//            ec2Client.terminateInstances(tir);
+            TerminateInstancesRequest tir = TerminateInstancesRequest.builder()
+                    .instanceIds(ec2Instance.getInstanceId())
+                    .build();
+            LOG.info("terminating instance: " + ec2Instance);
+            ec2Client.terminateInstances(tir);
         }
     }
 }

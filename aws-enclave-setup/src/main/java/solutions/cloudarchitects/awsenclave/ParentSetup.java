@@ -222,7 +222,7 @@ public class ParentSetup {
 
     private Region getRegion() {
         amazonEC2Client.describeAvailabilityZones().availabilityZones().get(0).regionName();
-        return software.amazon.awssdk.regions.Region.of(
+        return Region.of(
                 amazonEC2Client.describeAvailabilityZones().availabilityZones().get(0).regionName()
         );
     }
