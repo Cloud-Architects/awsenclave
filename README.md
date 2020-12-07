@@ -5,17 +5,25 @@ Easy creation of AWS enclaves.
 
 The project requires [vsockj](https://app.circleci.com/pipelines/github/Cloud-Architects/vsockj) binary file to work, available only on Linux OS, which means building must be done thought Docker image if not working on Linux.
 
-Sample queries:
+## aws-enclave-example-enclave
+To build (preferable run from host or other linux):
 ```shell
-docker run -v "$HOME/.m2":/var/maven/.m2 -ti --rm -u `id -u` -v "$PWD":/usr/src/mymaven \
--e MAVEN_CONFIG=/var/maven/.m2 -w /usr/src/mymaven \
-maven-gcc mvn -Duser.home=/var/maven clean nar:nar-unpack package
+mvn -f aws-enclave-example/aws-enclave-example-enclave/pom.xml clean nar:nar-unpack package jib:dockerBuild
 ```
 
+If not working on Linux:
 ```shell
 docker run -v "$HOME/.m2":/var/maven/.m2 -ti --rm -u `id -u` -v "$PWD":/usr/src/mymaven \
 -e MAVEN_CONFIG=/var/maven/.m2 -w /usr/src/mymaven \
-maven-gcc mvn -Duser.home=/var/maven package
+maven-gcc mvn -Duser.home=/var/maven -f aws-enclave-example/aws-enclave-example-enclave/pom.xml \
+clean nar:nar-unpack package
+
+mvn -f aws-enclave-example/aws-enclave-example-enclave/pom.xml  jib:dockerBuild
+```
+
+To test locally:
+```shell
+docker run aws-enclave-example-enclave:latest
 ```
 
 # Deployment

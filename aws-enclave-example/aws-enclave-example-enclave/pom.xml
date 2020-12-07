@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>aws-enclave-example</artifactId>
+        <groupId>solutions.cloudarchitects.aws-enclave</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>aws-enclave-example-enclave</artifactId>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>solutions.cloudarchitects.vsockj</groupId>
+            <artifactId>vsockj-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>solutions.cloudarchitects.vsockj</groupId>
+            <artifactId>vsockj-native</artifactId>
+            <type>nar</type>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.github.maven-nar</groupId>
+                <artifactId>nar-maven-plugin</artifactId>
+                <version>3.5.1</version>
+                <extensions>true</extensions>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>nar-download</goal>
+                            <goal>nar-download-dependencies</goal>
+                            <goal>nar-unpack</goal>
+                            <goal>nar-unpack-dependencies</goal>
+                            <goal>nar-assembly</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.google.cloud.tools</groupId>
+                <artifactId>jib-maven-plugin</artifactId>
+                <version>2.7.0</version>
+                <configuration>
+                    <from>
+                        <image>amazoncorretto:8u275</image>
+                    </from>
+                    <to>
+                        <image>aws-enclave-example-enclave:latest</image>
+                    </to>
+                    <container>
+                        <mainClass>solutions.cloudarchitects.awsenclave.example.Main</mainClass>
+                    </container>
+                    <extraDirectories>
+                        <paths>
+                            <path>
+                                <from>target/nar/lib/amd64-Linux-gpp/jni</from>
+                                <into>/usr/lib</into>
+                            </path>
+                        </paths>
+                    </extraDirectories>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
