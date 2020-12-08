@@ -61,6 +61,8 @@ public class ParentAdministratorService {
         String setupScript = "nitro-cli --version\n" +
                 "sudo systemctl start nitro-enclaves-allocator.service && sudo systemctl enable nitro-enclaves-allocator.service\n" +
                 "sudo systemctl start docker && sudo systemctl enable docker\n" +
+                "sudo amazon-linux-extras enable corretto8\n" +
+                "sudo yum install java-1.8.0-amazon-corretto-devel git -y\n" +
 
                 "touch server.py\n" +
                 "echo 'import socket' >> server.py\n" +
@@ -89,9 +91,9 @@ public class ParentAdministratorService {
                 "echo 'response = client_socket.recv(65536)' >> client.py\n" +
                 "echo 'client_socket.close()' >> client.py\n" +
 
-                "docker build . -t enclave-image:latest\n" +
-
-                "docker build . -t enclave-image:latest\n" +
+                "git clone https://github.com/Cloud-Architects/awsenclave\n" +
+                "cd awsenclave\n" +
+                "./mvnw -f aws-enclave-example/aws-enclave-example-enclave/pom.xml clean nar:nar-download nar:nar-unpack package jib:dockerBuild\n" +
                 "exit\n";
 
         try {
@@ -103,13 +105,14 @@ public class ParentAdministratorService {
     }
 
     public EnclaveMeasurements buildEnclave(KeyPair keyPair, Ec2Instance ec2Instance) {
-        String setupScript = "nitro-cli build-enclave --docker-uri enclave-image:latest  --output-file sample.eif\n" +
+        String setupScript = "nitro-cli build-enclave --docker-uri aws-enclave-example-enclave:latest --output-file sample.eif\n" +
                 "exit\n";
         try {
             LOG.info("waiting for basic setup");
             Optional<String> result = commandRunner
                     .runCommand(keyPair, ec2Instance.getDomainAddress(), setupScript, true);
             String logLines = result.orElseThrow(() -> new IllegalStateException("No enclave measurements"));
+            LOG.info(logLines);
             return EnclaveMeasurements.fromBuild(logLines);
         } catch (JSchException | IOException e) {
             throw new IllegalStateException(e.getMessage(), e);

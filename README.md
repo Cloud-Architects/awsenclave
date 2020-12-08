@@ -17,7 +17,7 @@ docker run -w /app -v "$HOME/.m2":/app/.m2 -v "$PWD":/app -ti --rm -u `id -u` \
 amazoncorretto:8u275 ./mvnw -Dmaven.repo.local=/app/.m2/repository -f aws-enclave-example/aws-enclave-example-enclave/pom.xml \
 clean nar:nar-unpack package
 
-./mvnw -f aws-enclave-example/aws-enclave-example-enclave/pom.xml  jib:dockerBuild
+./mvnw -f aws-enclave-example/aws-enclave-example-enclave/pom.xml compile  jib:dockerBuild
 ```
 
 To test locally:
