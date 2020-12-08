@@ -8,17 +8,16 @@ The project requires [vsockj](https://app.circleci.com/pipelines/github/Cloud-Ar
 ## aws-enclave-example-enclave
 To build (preferable run from host or other linux):
 ```shell
-mvn -f aws-enclave-example/aws-enclave-example-enclave/pom.xml clean nar:nar-unpack package jib:dockerBuild
+./mvnw -f aws-enclave-example/aws-enclave-example-enclave/pom.xml clean nar:nar-unpack package jib:dockerBuild
 ```
 
 If not working on Linux:
 ```shell
-docker run -v "$HOME/.m2":/var/maven/.m2 -ti --rm -u `id -u` -v "$PWD":/usr/src/mymaven \
--e MAVEN_CONFIG=/var/maven/.m2 -w /usr/src/mymaven \
-maven-gcc mvn -Duser.home=/var/maven -f aws-enclave-example/aws-enclave-example-enclave/pom.xml \
+docker run -w /app -v "$HOME/.m2":/app/.m2 -v "$PWD":/app -ti --rm -u `id -u` \
+amazoncorretto:8u275 ./mvnw -Dmaven.repo.local=/app/.m2/repository -f aws-enclave-example/aws-enclave-example-enclave/pom.xml \
 clean nar:nar-unpack package
 
-mvn -f aws-enclave-example/aws-enclave-example-enclave/pom.xml  jib:dockerBuild
+./mvnw -f aws-enclave-example/aws-enclave-example-enclave/pom.xml  jib:dockerBuild
 ```
 
 To test locally:

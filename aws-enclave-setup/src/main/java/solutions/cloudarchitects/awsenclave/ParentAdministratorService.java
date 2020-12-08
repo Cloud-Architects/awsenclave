@@ -62,10 +62,6 @@ public class ParentAdministratorService {
                 "sudo systemctl start nitro-enclaves-allocator.service && sudo systemctl enable nitro-enclaves-allocator.service\n" +
                 "sudo systemctl start docker && sudo systemctl enable docker\n" +
 
-                "touch run.sh\n" +
-                "echo '#!/bin/sh' >> run.sh\n" +
-                "echo 'python3 /app/client.py' >> run.sh\n" +
-
                 "touch server.py\n" +
                 "echo 'import socket' >> server.py\n" +
                 "echo 'client_socket = socket.socket(socket.AF_VSOCK, socket.SOCK_STREAM)' >> server.py\n" +
@@ -93,15 +89,7 @@ public class ParentAdministratorService {
                 "echo 'response = client_socket.recv(65536)' >> client.py\n" +
                 "echo 'client_socket.close()' >> client.py\n" +
 
-                "touch Dockerfile\n" +
-                "echo 'FROM amazonlinux' >> Dockerfile\n" +
-                "echo 'RUN yum install python3 net-tools -y' >> Dockerfile\n" +
-                "echo 'WORKDIR /app' >> Dockerfile\n" +
-                "echo 'COPY server.py ./' >> Dockerfile\n" +
-                "echo 'COPY client.py ./' >> Dockerfile\n" +
-                "echo 'COPY run.sh ./' >> Dockerfile\n" +
-                "echo 'RUN chmod +x run.sh' >> Dockerfile\n" +
-                "echo 'CMD /app/run.sh' >> Dockerfile\n" +
+                "docker build . -t enclave-image:latest\n" +
 
                 "docker build . -t enclave-image:latest\n" +
                 "exit\n";
