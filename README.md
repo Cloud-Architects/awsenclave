@@ -32,20 +32,6 @@ docker run aws-enclave-example-enclave:latest
 ```
 
 ## aws-enclave-example-host
-To build (preferable run from host or other linux):
-```shell
-./mvnw -f aws-enclave-example/aws-enclave-example-host/pom.xml clean nar:nar-unpack package jib:dockerBuild
-```
-
-If not working on Linux:
-```shell
-docker run -w /app -v "$HOME/.m2":/app/.m2 -v "$PWD":/app -ti --rm -u `id -u` \
-amazoncorretto:8u275 ./mvnw -Dmaven.repo.local=/app/.m2/repository -f aws-enclave-example/aws-enclave-example-host/pom.xml \
-clean package
-
-./mvnw -f aws-enclave-example/aws-enclave-example-host/pom.xml compile  jib:dockerBuild
-```
-
 To test locally:
 ```shell
 ./mvnw -f aws-enclave-example/aws-enclave-example-host/pom.xml compile exec:exec -Dexec.args=[CID]

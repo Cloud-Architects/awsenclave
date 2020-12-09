@@ -92,7 +92,7 @@ public class ParentAdministratorService {
 
                 "git clone https://github.com/Cloud-Architects/awsenclave\n" +
                 "cd awsenclave\n" +
-                "./mvnw -f aws-enclave-example/aws-enclave-example-enclave/pom.xml clean nar:nar-download nar:nar-unpack package jib:dockerBuild\n" +
+                "./mvnw -f aws-enclave-example/aws-enclave-example-enclave/pom.xml -Dmaven.artifact.threads=30 clean nar:nar-download nar:nar-unpack package jib:dockerBuild\n" +
                 "exit\n";
 
         try {
@@ -246,7 +246,7 @@ public class ParentAdministratorService {
     public void runHost(KeyPair keyPair, Ec2Instance ec2Instance, String enclaveCid) {
         String setupScript =
                 "cd awsenclave\n" +
-                        String.format("./mvnw -f aws-enclave-example/aws-enclave-example-host/pom.xml compile exec:exec -Denclave.cid=%s\n", enclaveCid) +
+                        String.format("./mvnw -f aws-enclave-example/aws-enclave-example-host/pom.xml -Dmaven.artifact.threads=30 compile exec:exec -Denclave.cid=%s\n", enclaveCid) +
                         "exit\n";
         try {
             LOG.info("waiting to run client");
