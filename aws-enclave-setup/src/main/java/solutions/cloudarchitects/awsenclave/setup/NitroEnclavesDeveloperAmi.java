@@ -1,4 +1,4 @@
-package solutions.cloudarchitects.awsenclave;
+package solutions.cloudarchitects.awsenclave.setup;
 
 import software.amazon.awssdk.regions.Region;
 

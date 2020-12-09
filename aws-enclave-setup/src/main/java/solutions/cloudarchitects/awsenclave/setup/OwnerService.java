@@ -1,4 +1,4 @@
-package solutions.cloudarchitects.awsenclave;
+package solutions.cloudarchitects.awsenclave.setup;
 
 import com.amazonaws.encryptionsdk.AwsCrypto;
 import com.amazonaws.encryptionsdk.CommitmentPolicy;

@@ -1,4 +1,4 @@
-package solutions.cloudarchitects.awsenclave.model;
+package solutions.cloudarchitects.awsenclave.setup.model;
 
 import org.junit.jupiter.api.Test;
 

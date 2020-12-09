@@ -1,4 +1,4 @@
-package solutions.cloudarchitects.awsenclave;
+package solutions.cloudarchitects.awsenclave.setup;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jcraft.jsch.JSchException;
@@ -7,14 +7,13 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.*;
-import solutions.cloudarchitects.awsenclave.model.Ec2Instance;
-import solutions.cloudarchitects.awsenclave.model.EnclaveMeasurements;
-import solutions.cloudarchitects.awsenclave.model.KeyPair;
+import solutions.cloudarchitects.awsenclave.setup.model.Ec2Instance;
+import solutions.cloudarchitects.awsenclave.setup.model.EnclaveMeasurements;
+import solutions.cloudarchitects.awsenclave.setup.model.KeyPair;
 
 import java.io.*;
 import java.util.Collections;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 public class ParentAdministratorService {
     public static final String EC2_USER = "ec2-user";
@@ -119,16 +118,18 @@ public class ParentAdministratorService {
         }
     }
 
-    public void runEnclave(KeyPair keyPair, Ec2Instance ec2Instance) {
+    public String runEnclave(KeyPair keyPair, Ec2Instance ec2Instance) {
+        String enclaveId = "10";
         String setupScript =
                 "echo 'vm.nr_hugepages=1536' | sudo tee /etc/sysctl.d/99-nitro.conf; sudo sysctl -p /etc/sysctl.d/99-nitro.conf\n" +
-                "sudo grep Huge /proc/meminfo\n" +
-                "nitro-cli run-enclave --cpu-count 2 --memory 3072 --eif-path sample.eif --enclave-cid 10\n" +
-                "nitro-cli describe-enclaves\n" +
-                "exit\n";
+                        "sudo grep Huge /proc/meminfo\n" +
+                        String.format("nitro-cli run-enclave --cpu-count 2 --memory 3072 --eif-path sample.eif --enclave-cid %s \n", enclaveId) +
+                        "nitro-cli describe-enclaves\n" +
+                        "exit\n";
         try {
             LOG.info("waiting for basic setup");
             commandRunner.runCommand(keyPair, ec2Instance.getDomainAddress(), setupScript, false);
+            return enclaveId;
         } catch (JSchException | IOException e) {
             throw new IllegalStateException(e.getMessage(), e);
         }
@@ -199,7 +200,7 @@ public class ParentAdministratorService {
             amazonEC2Client.createSecurityGroup(csgr);
 
             IpPermission ipPermission = IpPermission.builder()
-                .ipRanges(Collections.singletonList(IpRange.builder().cidrIp("0.0.0.0/0").build()))
+                    .ipRanges(Collections.singletonList(IpRange.builder().cidrIp("0.0.0.0/0").build()))
                     .ipProtocol("tcp")
                     .fromPort(22)
                     .toPort(22)
@@ -240,5 +241,18 @@ public class ParentAdministratorService {
         return Region.of(
                 amazonEC2Client.describeAvailabilityZones().availabilityZones().get(0).regionName()
         );
+    }
+
+    public void runHost(KeyPair keyPair, Ec2Instance ec2Instance, String enclaveCid) {
+        String setupScript =
+                "cd awsenclave\n" +
+                        String.format("./mvnw -f aws-enclave-example/aws-enclave-example-host/pom.xml compile exec:exec -Denclave.cid=%s\n", enclaveCid) +
+                        "exit\n";
+        try {
+            LOG.info("waiting to run client");
+            commandRunner.runCommand(keyPair, ec2Instance.getDomainAddress(), setupScript, false);
+        } catch (JSchException | IOException e) {
+            throw new IllegalStateException(e.getMessage(), e);
+        }
     }
 }

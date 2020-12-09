@@ -43,5 +43,5 @@ buildNumber.properties
 
 basic_commands1.sh
 basic_commands2.sh
-host_key_pair.json
+aws-enclave-setup/host_key_pair.json
 *.pem

@@ -1,4 +1,4 @@
-package solutions.cloudarchitects.awsenclave;
+package solutions.cloudarchitects.awsenclave.setup;
 
 import com.amazonaws.services.kms.AWSKMS;
 import com.amazonaws.services.kms.AWSKMSClientBuilder;
@@ -6,9 +6,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.TerminateInstancesRequest;
-import solutions.cloudarchitects.awsenclave.model.Ec2Instance;
-import solutions.cloudarchitects.awsenclave.model.EnclaveMeasurements;
-import solutions.cloudarchitects.awsenclave.model.KeyPair;
+import solutions.cloudarchitects.awsenclave.setup.model.Ec2Instance;
+import solutions.cloudarchitects.awsenclave.setup.model.EnclaveMeasurements;
+import solutions.cloudarchitects.awsenclave.setup.model.KeyPair;
 
 class Main {
     private static final Logger LOG = LoggerFactory.getLogger(CommandRunner.class);
@@ -24,11 +24,14 @@ class Main {
         try {
             parentAdministratorService.prepareSampleEnclave(keyPair, ec2Instance);
             EnclaveMeasurements enclaveMeasurements = parentAdministratorService.buildEnclave(keyPair, ec2Instance);
+
+            String enclaveId = parentAdministratorService.runEnclave(keyPair, ec2Instance);
+            parentAdministratorService.runHost(keyPair, ec2Instance, enclaveId);
+
             // TODO: update key policy to add measurement attributes
-            String keyId = ownerService.setupCrypto();
-            byte[] bytes = ownerService.encryptSample(keyId);
+//            String keyId = ownerService.setupCrypto();
+//            byte[] bytes = ownerService.encryptSample(keyId);
             // TODO: store sample data
-            parentAdministratorService.runEnclave(keyPair, ec2Instance);
         } finally {
             TerminateInstancesRequest tir = TerminateInstancesRequest.builder()
                     .instanceIds(ec2Instance.getInstanceId())

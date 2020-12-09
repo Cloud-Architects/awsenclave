@@ -1,4 +1,4 @@
-package solutions.cloudarchitects.awsenclave;
+package solutions.cloudarchitects.awsenclave.setup;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.JSch;
@@ -6,7 +6,7 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import solutions.cloudarchitects.awsenclave.model.KeyPair;
+import solutions.cloudarchitects.awsenclave.setup.model.KeyPair;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -16,7 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.Properties;
 
-import static solutions.cloudarchitects.awsenclave.ParentAdministratorService.EC2_USER;
+import static solutions.cloudarchitects.awsenclave.setup.ParentAdministratorService.EC2_USER;
 
 public class CommandRunner {
     private static final Logger LOG = LoggerFactory.getLogger(CommandRunner.class);
