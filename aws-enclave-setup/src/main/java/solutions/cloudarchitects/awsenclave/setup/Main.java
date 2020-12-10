@@ -15,9 +15,11 @@ class Main {
 
     public static void main(String... args) {
         Ec2Client ec2Client = Ec2Client.create();
-        AWSKMS kmsClient = AWSKMSClientBuilder.defaultClient();
         ParentAdministratorService parentAdministratorService = new ParentAdministratorService(ec2Client);
-        OwnerService ownerService = new OwnerService(kmsClient);
+        AWSKMS kmsClient = AWSKMSClientBuilder.standard()
+                .withRegion(parentAdministratorService.getRegion().id())
+                .build();
+        OwnerService ownerService = new OwnerService(kmsClient, parentAdministratorService.getRegion());
 
         KeyPair keyPair = parentAdministratorService.loadKey();
         Ec2Instance ec2Instance = parentAdministratorService.createParent(keyPair);
@@ -29,8 +31,8 @@ class Main {
             parentAdministratorService.runHost(keyPair, ec2Instance, enclaveId);
 
             // TODO: update key policy to add measurement attributes
-//            String keyId = ownerService.setupCrypto();
-//            byte[] bytes = ownerService.encryptSample(keyId);
+            String keyId = ownerService.setupCrypto();
+            byte[] bytes = ownerService.encryptSample(keyId);
             // TODO: store sample data
         } finally {
             TerminateInstancesRequest tir = TerminateInstancesRequest.builder()

@@ -30,6 +30,8 @@ public class ParentAdministratorService {
     private final Ec2Client amazonEC2Client;
     private final CommandRunner commandRunner;
 
+    private Region region;
+
     public ParentAdministratorService(Ec2Client amazonEC2Client) {
         this(amazonEC2Client, new CommandRunner());
     }
@@ -138,7 +140,6 @@ public class ParentAdministratorService {
     public Ec2Instance createParent(KeyPair keyPair) {
         String securityGroupName = getSecurityGroupName();
 
-        Region region = getRegion();
         Optional<String> imageId = NitroEnclavesDeveloperAmi.getImageId(region);
         RunInstancesRequest runInstancesRequest = RunInstancesRequest.builder()
                 .instanceType(InstanceType.C5_XLARGE)
@@ -236,11 +237,13 @@ public class ParentAdministratorService {
         }
     }
 
-    private Region getRegion() {
-        amazonEC2Client.describeAvailabilityZones().availabilityZones().get(0).regionName();
-        return Region.of(
-                amazonEC2Client.describeAvailabilityZones().availabilityZones().get(0).regionName()
-        );
+    public synchronized Region getRegion() {
+        if (region == null) {
+            region = Region.of(
+                    amazonEC2Client.describeAvailabilityZones().availabilityZones().get(0).regionName()
+            );
+        }
+        return region;
     }
 
     public void runHost(KeyPair keyPair, Ec2Instance ec2Instance, String enclaveCid) {

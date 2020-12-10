@@ -6,10 +6,8 @@ import com.amazonaws.encryptionsdk.CryptoResult;
 import com.amazonaws.encryptionsdk.kms.KmsMasterKey;
 import com.amazonaws.encryptionsdk.kms.KmsMasterKeyProvider;
 import com.amazonaws.services.kms.AWSKMS;
-import com.amazonaws.services.kms.model.AliasListEntry;
-import com.amazonaws.services.kms.model.CreateAliasRequest;
-import com.amazonaws.services.kms.model.CreateKeyRequest;
-import com.amazonaws.services.kms.model.CreateKeyResult;
+import com.amazonaws.services.kms.model.*;
+import software.amazon.awssdk.regions.Region;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -22,14 +20,17 @@ public class OwnerService {
             "eiusmod tempor incididunt ut labore et dolore magna aliqua";
 
     private final AWSKMS kmsClient;
+    private final Region region;
 
-    public OwnerService(AWSKMS kmsClient) {
+    public OwnerService(AWSKMS kmsClient, Region region) {
         this.kmsClient = kmsClient;
+        this.region = region;
     }
 
     public String setupCrypto() {
-        Optional<String> enclaveKeyId = kmsClient.listAliases().getAliases().stream()
-                .filter(alias -> alias.getAliasName().equals("enclave"))
+        ListAliasesResult listAliasesResult = kmsClient.listAliases();
+        Optional<String> enclaveKeyId = listAliasesResult.getAliases().stream()
+                .filter(alias -> alias.getAliasName().equals("alias/enclave"))
                 .map(AliasListEntry::getTargetKeyId)
                 .findAny();
         if (enclaveKeyId.isPresent()) {
@@ -39,7 +40,7 @@ public class OwnerService {
         CreateKeyResult key = kmsClient.createKey(createKeyRequest);
         kmsClient.createAlias(new CreateAliasRequest()
                 .withTargetKeyId(key.getKeyMetadata().getKeyId())
-                .withAliasName("enclave"));
+                .withAliasName("alias/enclave"));
         return key.getKeyMetadata().getKeyId();
     }
 
@@ -50,6 +51,7 @@ public class OwnerService {
                 .build();
 
         final KmsMasterKeyProvider keyProvider = KmsMasterKeyProvider.builder()
+                .withDefaultRegion(region.id())
                 .buildStrict(keyId);
         final Map<String, String> encryptionContext = Collections.singletonMap("enclaveName", "aws-enclave");
         final CryptoResult<byte[], KmsMasterKey> encryptResult = crypto

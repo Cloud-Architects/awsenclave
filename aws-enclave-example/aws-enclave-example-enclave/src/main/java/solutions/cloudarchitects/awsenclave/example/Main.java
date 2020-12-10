@@ -8,7 +8,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 public class Main {
+    private static final String AWS_ZONE = "ap-southeast-1";
     public static void main(String[] args) throws IOException {
+
         ServerVSock server = new ServerVSock();
         server.bind(new VSockAddress(VSockAddress.VMADDR_CID_ANY, 5000));
         System.out.println("Bound on Cid: " + server.getLocalCid());

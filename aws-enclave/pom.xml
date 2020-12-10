@@ -14,6 +14,7 @@
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
+        <aws-java-v1-sdk.version>1.11.914</aws-java-v1-sdk.version>
     </properties>
 
     <dependencies>
@@ -27,6 +28,16 @@
             <artifactId>vsockj-native</artifactId>
             <type>nar</type>
             <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-kms</artifactId>
+            <version>${aws-java-v1-sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-encryption-sdk-java</artifactId>
+            <version>2.0.0</version>
         </dependency>
     </dependencies>
 
