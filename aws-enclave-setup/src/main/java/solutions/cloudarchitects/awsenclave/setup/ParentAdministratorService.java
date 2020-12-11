@@ -1,9 +1,14 @@
 package solutions.cloudarchitects.awsenclave.setup;
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.encryptionsdk.exception.AwsCryptoException;
+import com.amazonaws.services.identitymanagement.AmazonIdentityManagement;
+import com.amazonaws.services.identitymanagement.model.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jcraft.jsch.JSchException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.*;
@@ -15,7 +20,7 @@ import java.io.*;
 import java.util.Collections;
 import java.util.Optional;
 
-public class ParentAdministratorService {
+public final class ParentAdministratorService {
     public static final String EC2_USER = "ec2-user";
 
     private static final String DEFAULT_KEY_NAME = "awsenclave";
@@ -28,16 +33,22 @@ public class ParentAdministratorService {
     private static final Logger LOG = LoggerFactory.getLogger(CommandRunner.class);
 
     private final Ec2Client amazonEC2Client;
+    private final AmazonIdentityManagement iamClient;
+    private final OwnerService ownerService;
     private final CommandRunner commandRunner;
+    private final Region region;
 
-    private Region region;
-
-    public ParentAdministratorService(Ec2Client amazonEC2Client) {
-        this(amazonEC2Client, new CommandRunner());
+    public ParentAdministratorService(Ec2Client amazonEC2Client, AmazonIdentityManagement iamClient,
+                                      OwnerService ownerService, Region region) {
+        this(amazonEC2Client, iamClient, ownerService, region, new CommandRunner());
     }
 
-    public ParentAdministratorService(Ec2Client amazonEC2Client, CommandRunner commandRunner) {
+    public ParentAdministratorService(Ec2Client amazonEC2Client, AmazonIdentityManagement iamClient,
+                                      OwnerService ownerService, Region region, CommandRunner commandRunner) {
         this.amazonEC2Client = amazonEC2Client;
+        this.iamClient = iamClient;
+        this.ownerService = ownerService;
+        this.region = region;
         this.commandRunner = commandRunner;
     }
 
@@ -139,10 +150,14 @@ public class ParentAdministratorService {
 
     public Ec2Instance createParent(KeyPair keyPair) {
         String securityGroupName = getSecurityGroupName();
-
         Optional<String> imageId = NitroEnclavesDeveloperAmi.getImageId(region);
+        InstanceProfile parentInstanceProfile = getParentInstanceProfile();
+
         RunInstancesRequest runInstancesRequest = RunInstancesRequest.builder()
                 .instanceType(InstanceType.C5_XLARGE)
+                .iamInstanceProfile(IamInstanceProfileSpecification.builder()
+                        .name(parentInstanceProfile.getInstanceProfileName())
+                        .build())
                 .minCount(1)
                 .maxCount(1)
                 .keyName(keyPair.getKeyName())
@@ -183,6 +198,25 @@ public class ParentAdministratorService {
         }
 
         return new Ec2Instance(createdInstanceId, publicDNS);
+    }
+
+    private InstanceProfile getParentInstanceProfile() {
+        Role role = ownerService.getParentRole();
+
+        InstanceProfile parentProfile;
+        try {
+            parentProfile = iamClient.getInstanceProfile(new GetInstanceProfileRequest()
+                    .withInstanceProfileName("enclaveParentProfile")).getInstanceProfile();
+        } catch (AmazonServiceException ex) {
+            parentProfile = iamClient.createInstanceProfile(new CreateInstanceProfileRequest()
+                .withInstanceProfileName("enclaveParentProfile")).getInstanceProfile();
+
+            iamClient.addRoleToInstanceProfile(new AddRoleToInstanceProfileRequest()
+                .withInstanceProfileName(parentProfile.getInstanceProfileName())
+                .withRoleName(role.getRoleName()));
+        }
+
+        return parentProfile;
     }
 
     private String getSecurityGroupName() {
@@ -237,13 +271,17 @@ public class ParentAdministratorService {
         }
     }
 
-    public synchronized Region getRegion() {
-        if (region == null) {
-            region = Region.of(
-                    amazonEC2Client.describeAvailabilityZones().availabilityZones().get(0).regionName()
-            );
+    public void runVSockProxy(KeyPair keyPair, Ec2Instance ec2Instance, String domain) {
+        String setupScript =
+                "cd awsenclave\n" +
+                        String.format("nohup vsock-proxy 8000 %s 443 &\n", domain) +
+                        "exit\n";
+        try {
+            LOG.info("waiting to run client");
+            commandRunner.runCommand(keyPair, ec2Instance.getDomainAddress(), setupScript, false);
+        } catch (JSchException | IOException e) {
+            throw new IllegalStateException(e.getMessage(), e);
         }
-        return region;
     }
 
     public void runHost(KeyPair keyPair, Ec2Instance ec2Instance, String enclaveCid) {

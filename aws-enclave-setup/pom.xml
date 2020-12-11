@@ -14,7 +14,7 @@
     <properties>
         <aws.version>2.15.39</aws.version>
         <junit.version>5.7.0</junit.version>
-        <aws-java-v1-sdk.version>1.11.914</aws-java-v1-sdk.version>
+        <aws-java-v1-sdk.version>1.11.916</aws-java-v1-sdk.version>
     </properties>
 
     <dependencies>
@@ -26,6 +26,11 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-kms</artifactId>
+            <version>${aws-java-v1-sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-iam</artifactId>
             <version>${aws-java-v1-sdk.version}</version>
         </dependency>
         <dependency>
