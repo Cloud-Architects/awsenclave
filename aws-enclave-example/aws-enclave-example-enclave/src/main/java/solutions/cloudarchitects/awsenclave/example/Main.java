@@ -18,8 +18,6 @@ import solutions.cloudarchitects.vsockj.VSockAddress;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.util.Optional;
 
 public class Main {
     private static final String AWS_REGION = "ap-southeast-1";
@@ -29,9 +27,10 @@ public class Main {
         new Thread(() -> {
             try {
                 ServerSocket serverSocket = new ServerSocket(8433);
-                Socket clientSocket;
-                while ((clientSocket = serverSocket.accept()) != null) {
-                    new SocketVSockProxy(clientSocket, 8433);
+                System.out.println("Running proxy server on port " + serverSocket.getLocalPort());
+                while (true) {
+                    Socket clientSocket = serverSocket.accept();
+                    new Thread(new SocketVSockProxy(clientSocket, 8433)).start();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -51,7 +50,7 @@ public class Main {
                             .readValue(b, EC2MetadataUtils.IAMSecurityCredential.class);
                     AWSKMS kmsClient = AWSKMSClientBuilder.standard()
                             .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(
-                                    "localhost:8433", AWS_REGION
+                                    "kms.ap-southeast-1.amazonaws.com:8433", AWS_REGION
                             ))
                             .withCredentials(new AWSStaticCredentialsProvider(
                                     new BasicSessionCredentials(credential.accessKeyId, credential.secretAccessKey, credential.token)))

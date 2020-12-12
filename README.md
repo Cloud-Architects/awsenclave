@@ -14,7 +14,7 @@ amazoncorretto:8u275 ./mvnw -Dmaven.repo.local=/app/.m2/repository compile insta
 
 or
 ```shell
-./mvnw -Dmaven.repo.local=/app/.m2/repository compile install
+./mvnw compile install
 ```
 
 ## aws-enclave-setup
@@ -35,12 +35,6 @@ docker run -w /app -v "$HOME/.m2":/app/.m2 -v "$PWD":/app -ti --rm -u `id -u` \
 amazoncorretto:8u275 ./mvnw -Dmaven.repo.local=/app/.m2/repository -f aws-enclave-example/aws-enclave-example-enclave/pom.xml \
 clean nar:nar-unpack package
 
-docker run -w /app -v "$HOME/.m2":/app/.m2 -v "$PWD":/app -ti --rm -u `id -u` \
-amazoncorretto:8u275 ./mvnw -Dmaven.repo.local=/app/.m2/repository  \
--f aws-enclave-example/aws-enclave-example-enclave/pom.xml compile exec:exec
-
-
-
 
 ./mvnw -f aws-enclave-example/aws-enclave-example-enclave/pom.xml compile  jib:dockerBuild
 ```
@@ -57,7 +51,7 @@ or
 ## aws-enclave-example-host
 To test locally:
 ```shell
-./mvnw -f aws-enclave-example/aws-enclave-example-host/pom.xml compile exec:exec -Dexec.args=[CID]
+./mvnw -f aws-enclave-example/aws-enclave-example-host/pom.xml compile exec:exec -Denclave.cid=[CID]
 ```
 
 ```shell
