@@ -96,6 +96,29 @@
                     </extraDirectories>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <executable>java</executable>
+                    <arguments>
+                        <argument>-Djava.library.path=target/nar/lib/amd64-Linux-gpp/jni</argument>
+                        <argument>-classpath</argument>
+                        <!-- automatically creates the classpath using all project dependencies,
+                             also adding the project build directory -->
+                        <classpath/>
+                        <argument>solutions.cloudarchitects.awsenclave.example.Main</argument>
+                    </arguments>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>

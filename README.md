@@ -5,6 +5,18 @@ Easy creation of [AWS enclaves](https://docs.aws.amazon.com/enclaves/latest/user
 
 The project requires [vsockj](https://app.circleci.com/pipelines/github/Cloud-Architects/vsockj) binary file to work, available only on Linux OS, which means building must be done thought Docker image if not working on Linux.
 
+When developing and running locally, ensure latest jars are in your local mvn repo.
+
+```shell
+docker run -w /app -v "$HOME/.m2":/app/.m2 -v "$PWD":/app -ti --rm -u `id -u` \
+amazoncorretto:8u275 ./mvnw -Dmaven.repo.local=/app/.m2/repository compile install
+```
+
+or
+```shell
+./mvnw -Dmaven.repo.local=/app/.m2/repository compile install
+```
+
 ## aws-enclave-setup
 To run the example Host + enclave setup and verify communication, run the following command:
 ```shell
@@ -23,12 +35,23 @@ docker run -w /app -v "$HOME/.m2":/app/.m2 -v "$PWD":/app -ti --rm -u `id -u` \
 amazoncorretto:8u275 ./mvnw -Dmaven.repo.local=/app/.m2/repository -f aws-enclave-example/aws-enclave-example-enclave/pom.xml \
 clean nar:nar-unpack package
 
+docker run -w /app -v "$HOME/.m2":/app/.m2 -v "$PWD":/app -ti --rm -u `id -u` \
+amazoncorretto:8u275 ./mvnw -Dmaven.repo.local=/app/.m2/repository  \
+-f aws-enclave-example/aws-enclave-example-enclave/pom.xml compile exec:exec
+
+
+
+
 ./mvnw -f aws-enclave-example/aws-enclave-example-enclave/pom.xml compile  jib:dockerBuild
 ```
 
 To test locally:
 ```shell
 docker run aws-enclave-example-enclave:latest
+```
+or
+```shell
+./mvnw -f aws-enclave-example/aws-enclave-example-enclave/pom.xml compile exec:exec
 ```
 
 ## aws-enclave-example-host
