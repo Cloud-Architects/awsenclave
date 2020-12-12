@@ -76,33 +76,6 @@ public final class ParentAdministratorService {
                 "sudo amazon-linux-extras enable corretto8\n" +
                 "sudo yum install java-1.8.0-amazon-corretto-devel git -y\n" +
 
-                "touch server.py\n" +
-                "echo 'import socket' >> server.py\n" +
-                "echo 'client_socket = socket.socket(socket.AF_VSOCK, socket.SOCK_STREAM)' >> server.py\n" +
-                "echo 'cid = socket.VMADDR_CID_ANY' >> server.py\n" +
-                "echo 'client_port = 5000' >> server.py\n" +
-                "echo 'client_socket.bind((cid, client_port))' >> server.py\n" +
-                "echo 'client_socket.listen()' >> server.py\n" +
-                "echo 'while True:' >> server.py\n" +
-                "echo '       try:' >> server.py\n" +
-                "echo '               (conn, (remote_cid, remote_port)) = client_socket.accept()' >> server.py\n" +
-                "echo '               req = conn.recv(4096)' >> server.py\n" +
-                "echo '               print(req)' >> server.py\n" +
-                "echo '               conn.sendall(b\"Got: \" + req)' >> server.py\n" +
-                "echo '               conn.close()' >> server.py\n" +
-                "echo '       except:' >> server.py\n" +
-                "echo '               print(\"An exception occurred\")' >> server.py\n" +
-
-                "touch client.py\n" +
-                "echo 'import socket' >> client.py\n" +
-                "echo 'client_socket = socket.socket(socket.AF_VSOCK, socket.SOCK_STREAM)' >> client.py\n" +
-                "echo 'cid = socket.VMADDR_CID_HOST' >> client.py\n" +
-                "echo 'client_port = 5000' >> client.py\n" +
-                "echo 'client_socket.connect((cid, client_port))' >> client.py\n" +
-                "echo 'client_socket.send(b\"hello world\")' >> client.py\n" +
-                "echo 'response = client_socket.recv(65536)' >> client.py\n" +
-                "echo 'client_socket.close()' >> client.py\n" +
-
                 "git clone https://github.com/Cloud-Architects/awsenclave\n" +
                 "cd awsenclave\n" +
                 "./mvnw -f aws-enclave-example/aws-enclave-example-enclave/pom.xml -Dmaven.artifact.threads=30 clean nar:nar-download nar:nar-unpack package jib:dockerBuild\n" +
@@ -274,7 +247,7 @@ public final class ParentAdministratorService {
     public void runVSockProxy(KeyPair keyPair, Ec2Instance ec2Instance, String domain) {
         String setupScript =
                 "cd awsenclave\n" +
-                        String.format("nohup vsock-proxy 8000 %s 443 &\n", domain) +
+                        String.format("nohup vsock-proxy 8433 %s 443 &\n", domain) +
                         "exit\n";
         try {
             LOG.info("waiting to run client");
@@ -287,7 +260,7 @@ public final class ParentAdministratorService {
     public void runHost(KeyPair keyPair, Ec2Instance ec2Instance, String enclaveCid) {
         String setupScript =
                 "cd awsenclave\n" +
-                        String.format("./mvnw -f aws-enclave-example/aws-enclave-example-host/pom.xml -Dmaven.artifact.threads=30 compile exec:exec -Denclave.cid=%s\n", enclaveCid) +
+                        String.format("./mvnw -f aws-enclave-example/aws-enclave-example-host/pom.xml -Dmaven.artifact.threads=30 clean compile exec:exec -Denclave.cid=%s\n", enclaveCid) +
                         "exit\n";
         try {
             LOG.info("waiting to run client");

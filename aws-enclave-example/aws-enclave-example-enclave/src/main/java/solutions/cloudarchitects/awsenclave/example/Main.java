@@ -10,11 +10,14 @@ import com.amazonaws.services.kms.model.DescribeKeyRequest;
 import com.amazonaws.services.kms.model.DescribeKeyResult;
 import com.amazonaws.util.EC2MetadataUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import solutions.cloudarchitects.awsenclave.enclave.SocketVSockProxy;
 import solutions.cloudarchitects.vsockj.ServerVSock;
 import solutions.cloudarchitects.vsockj.VSock;
 import solutions.cloudarchitects.vsockj.VSockAddress;
 
 import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
@@ -23,6 +26,17 @@ public class Main {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     public static void main(String[] args) throws IOException {
+        new Thread(() -> {
+            try {
+                ServerSocket serverSocket = new ServerSocket(8433);
+                Socket clientSocket;
+                while ((clientSocket = serverSocket.accept()) != null) {
+                    new SocketVSockProxy(clientSocket, 8433);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
 
         ServerVSock server = new ServerVSock();
         server.bind(new VSockAddress(VSockAddress.VMADDR_CID_ANY, 5000));

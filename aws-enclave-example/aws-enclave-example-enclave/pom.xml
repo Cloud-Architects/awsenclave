@@ -32,6 +32,11 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>solutions.cloudarchitects.aws-enclave</groupId>
+            <artifactId>aws-enclave</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-kms</artifactId>
             <version>${aws-java-v1-sdk.version}</version>
