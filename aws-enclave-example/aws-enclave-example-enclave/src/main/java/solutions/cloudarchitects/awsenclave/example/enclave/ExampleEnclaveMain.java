@@ -21,12 +21,6 @@ import solutions.cloudarchitects.vsockj.VSockAddress;
 
 import java.io.*;
 import java.net.*;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
 
 @SuppressWarnings({"InfiniteLoopStatement", "ResultOfMethodCallIgnored", "MismatchedReadAndWriteOfArray"})
 public class ExampleEnclaveMain {
@@ -35,8 +29,6 @@ public class ExampleEnclaveMain {
     private static final Logger LOG = LoggerFactory.getLogger(ExampleEnclaveMain.class);
 
     public static void main(String[] args) throws IOException {
-        LOG.info(execCmd("/usr/sbin/ip addr add 127.0.0.1 dev lo"));
-
         final String[] proxyExceptionMessage = {"None"};
         InetAddress loopbackAddress = InetAddress.getLoopbackAddress();
         ServerSocket serverSocket = new ServerSocket(8433, 50, loopbackAddress);
@@ -79,7 +71,7 @@ public class ExampleEnclaveMain {
                                             }
                                         }))
                                 .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(
-                                        "kms.ap-southeast-1.amazonaws.com", AWS_REGION // for port redirection
+                                        "kms.ap-southeast-1.amazonaws.com:8443", AWS_REGION // for port redirection
                                 ))
                                 .withCredentials(new AWSStaticCredentialsProvider(
                                         new BasicSessionCredentials(credential.accessKeyId, credential.secretAccessKey, credential.token)))
@@ -109,25 +101,5 @@ public class ExampleEnclaveMain {
         } finally {
             server.close();
         }
-    }
-
-    public static String execCmd(String cmd) {
-        StringBuilder result = new StringBuilder();
-        try {
-            ProcessBuilder builder = new ProcessBuilder(cmd);
-            builder.redirectErrorStream(true);
-            Process process = builder.start();
-            InputStream is = process.getInputStream();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-
-            String line;
-            while ((line = reader.readLine()) != null) {
-                result.append(line).append("\n");
-            }
-        } catch (Exception e) {
-            LOG.warn(e.getMessage(), e);
-        }
-
-        return result.toString();
     }
 }
