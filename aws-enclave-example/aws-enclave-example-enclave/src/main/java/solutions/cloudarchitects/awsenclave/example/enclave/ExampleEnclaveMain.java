@@ -20,13 +20,11 @@ import solutions.cloudarchitects.vsockj.VSock;
 import solutions.cloudarchitects.vsockj.VSockAddress;
 
 import java.io.*;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Enumeration;
 
 public class ExampleEnclaveMain {
     private static final String AWS_REGION = "ap-southeast-1";
@@ -34,6 +32,7 @@ public class ExampleEnclaveMain {
     private static final Logger LOG = LoggerFactory.getLogger(ExampleEnclaveMain.class);
 
     public static void main(String[] args) throws IOException {
+
         final String[] proxyExceptionMessage = {"None"};
         InetAddress loopbackAddress = InetAddress.getLoopbackAddress();
         ServerSocket serverSocket = new ServerSocket(8433, 50, loopbackAddress);
@@ -62,15 +61,11 @@ public class ExampleEnclaveMain {
                     EC2MetadataUtils.IAMSecurityCredential credential = MAPPER
                             .readValue(b, EC2MetadataUtils.IAMSecurityCredential.class);
 
-                    String[] pathnames = new File("/usr/sbin").list();
-                    StringBuilder sb = new StringBuilder();
-                    for (String pathname : pathnames) {
-                        // Print the names of files and directories
-                        sb.append(pathname);
-                        sb.append("\n");
-                    }
+                    NetworkInterface nif = NetworkInterface.getByName("lo");
+                    Enumeration<InetAddress> nifAddresses = nif.getInetAddresses();
+
                     peerVSock.getOutputStream()
-                            .write(sb.toString().getBytes(StandardCharsets.UTF_8));
+                            .write(MAPPER.writeValueAsBytes(nifAddresses));
 
 //                    try {
 //                        AWSKMS kmsClient = AWSKMSClientBuilder.standard()
