@@ -48,6 +48,11 @@ or
 ./mvnw -f aws-enclave-example/aws-enclave-example-enclave/pom.xml compile exec:exec
 ```
 
+To show logs in a running enclave:
+```shell
+nitro-cli console --enclave-id [enclave-id]
+```
+
 ## aws-enclave-example-host
 To test locally:
 ```shell

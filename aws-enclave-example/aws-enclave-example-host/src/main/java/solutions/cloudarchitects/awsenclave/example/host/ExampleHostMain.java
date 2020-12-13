@@ -2,6 +2,8 @@ package solutions.cloudarchitects.awsenclave.example.host;
 
 import com.amazonaws.util.EC2MetadataUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import solutions.cloudarchitects.vsockj.VSock;
 import solutions.cloudarchitects.vsockj.VSockAddress;
 
@@ -12,6 +14,7 @@ import java.util.Optional;
 
 public class ExampleHostMain {
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final Logger LOG = LoggerFactory.getLogger(ExampleHostMain.class);
 
     public static void main(String[] args) throws IOException {
         if (args.length != 1) {
@@ -32,7 +35,7 @@ public class ExampleHostMain {
                     .write(MAPPER.writeValueAsBytes(credential));
             byte[] b = new byte[4096];
             client.getInputStream().read(b, 0, 4096);
-            System.out.println(new String(b, StandardCharsets.UTF_8));
+            LOG.info("Received: " + new String(b, StandardCharsets.UTF_8));
         }
     }
 }

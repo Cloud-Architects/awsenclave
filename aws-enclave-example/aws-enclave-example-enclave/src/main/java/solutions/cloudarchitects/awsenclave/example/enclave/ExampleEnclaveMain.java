@@ -13,6 +13,8 @@ import com.amazonaws.services.kms.model.DescribeKeyRequest;
 import com.amazonaws.services.kms.model.DescribeKeyResult;
 import com.amazonaws.util.EC2MetadataUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import solutions.cloudarchitects.awsenclave.enclave.SocketVSockProxy;
 import solutions.cloudarchitects.vsockj.ServerVSock;
 import solutions.cloudarchitects.vsockj.VSock;
@@ -27,25 +29,27 @@ import java.net.UnknownHostException;
 public class ExampleEnclaveMain {
     private static final String AWS_REGION = "ap-southeast-1";
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final Logger LOG = LoggerFactory.getLogger(ExampleEnclaveMain.class);
 
     public static void main(String[] args) throws IOException {
         final String[] proxyExceptionMessage = {"None"};
         new Thread(() -> {
             try {
                 ServerSocket serverSocket = new ServerSocket(8433);
-                System.out.println("Running proxy server on port " + serverSocket.getLocalPort());
+                LOG.info("Running proxy server on local port " + serverSocket.getLocalPort());
                 while (true) {
                     Socket clientSocket = serverSocket.accept();
                     new Thread(new SocketVSockProxy(clientSocket, 8433)).start();
                 }
             } catch (IOException e) {
+                LOG.warn(e.getMessage(), e);
                 proxyExceptionMessage[0] = e.getMessage();
             }
         }).start();
 
         ServerVSock server = new ServerVSock();
         server.bind(new VSockAddress(VSockAddress.VMADDR_CID_ANY, 5000));
-        System.out.println("Bound on Cid: " + server.getLocalCid());
+        LOG.info("Bound on Cid: " + server.getLocalCid());
 
         try {
             while (true) {
@@ -86,13 +90,14 @@ public class ExampleEnclaveMain {
                         peerVSock.getOutputStream()
                                 .write(MAPPER.writeValueAsBytes(describeKeyResult));
                     } catch (Exception e) {
+                        LOG.warn(e.getMessage(), e);
                         peerVSock.getOutputStream()
                                 .write(MAPPER.writeValueAsBytes(proxyExceptionMessage[0] + e.getMessage()
                                         + MAPPER.writeValueAsString(e.getStackTrace())));
                     }
 
-                } catch (Exception ex) {
-                    System.out.println("Error: " + ex.getMessage());
+                } catch (Exception e) {
+                    LOG.warn(e.getMessage(), e);
                 }
             }
         } finally {

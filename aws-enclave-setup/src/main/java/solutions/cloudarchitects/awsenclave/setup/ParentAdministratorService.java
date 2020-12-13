@@ -108,7 +108,7 @@ public final class ParentAdministratorService {
         String setupScript =
                 "echo 'vm.nr_hugepages=1536' | sudo tee /etc/sysctl.d/99-nitro.conf; sudo sysctl -p /etc/sysctl.d/99-nitro.conf\n" +
                         "sudo grep Huge /proc/meminfo\n" +
-                        String.format("nitro-cli run-enclave --cpu-count 2 --memory 3072 --eif-path sample.eif --enclave-cid %s \n", enclaveId) +
+                        String.format("nitro-cli run-enclave --cpu-count 2 --memory 3072 --eif-path sample.eif --enclave-cid %s --debug-mode\n", enclaveId) +
                         "nitro-cli describe-enclaves\n" +
                         "exit\n";
         try {
