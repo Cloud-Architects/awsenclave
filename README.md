@@ -25,6 +25,7 @@ To run the example Host + enclave setup and verify communication, run the follow
 ```shell
 ./mvnw -f aws-enclave-setup/pom.xml compile exec:exec
 ```
+The command should setup necessary resources and run a host application that calls a service in enclave to invoke a DescribeKey call to KMS.
 
 ## aws-enclave-example-enclave
 To build (preferable run from host or other linux):
