@@ -65,7 +65,7 @@ public class ExampleEnclaveMain {
                                             @Override
                                             public InetAddress[] resolve(String host) throws UnknownHostException {
                                                 if ("kms.ap-southeast-1.amazonaws.com".equals(host)) {
-                                                    return new InetAddress[]{InetAddress.getByName("127.0.0.1")}; // for host redirection
+                                                    return InetAddress.getAllByName("localhost"); // for host redirection
                                                 } else {
                                                     return super.resolve(host);
                                                 }
