@@ -29,16 +29,20 @@ public class ExampleEnclaveMain {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     public static void main(String[] args) throws IOException {
-        new Thread(() -> {
-            try {
-                ServerSocket serverSocket = new ServerSocket(8433);
-                System.out.println("Running proxy server on port " + serverSocket.getLocalPort());
-                while (true) {
-                    Socket clientSocket = serverSocket.accept();
-                    new Thread(new SocketVSockProxy(clientSocket, 8433)).start();
+        final String[] proxyExceptionMessage = {""};
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    ServerSocket serverSocket = new ServerSocket(8433);
+                    System.out.println("Running proxy server on port " + serverSocket.getLocalPort());
+                    while (true) {
+                        Socket clientSocket = serverSocket.accept();
+                        new Thread(new SocketVSockProxy(clientSocket, 8433)).start();
+                    }
+                } catch (IOException e) {
+                    proxyExceptionMessage[0] = e.getMessage();
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }).start();
 
@@ -86,7 +90,8 @@ public class ExampleEnclaveMain {
                                 .write(MAPPER.writeValueAsBytes(describeKeyResult));
                     } catch (Exception e) {
                         peerVSock.getOutputStream()
-                                .write(MAPPER.writeValueAsBytes(e.getMessage() + MAPPER.writeValueAsString(e.getStackTrace())));
+                                .write(MAPPER.writeValueAsBytes(proxyExceptionMessage[0] + e.getMessage()
+                                        + MAPPER.writeValueAsString(e.getStackTrace())));
                     }
 
                 } catch (Exception ex) {
