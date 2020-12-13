@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.Ec2Client;
+import software.amazon.awssdk.services.ec2.model.TerminateInstancesRequest;
 import solutions.cloudarchitects.awsenclave.setup.model.Ec2Instance;
 import solutions.cloudarchitects.awsenclave.setup.model.EnclaveMeasurements;
 import solutions.cloudarchitects.awsenclave.setup.model.KeyPair;
@@ -46,11 +47,11 @@ class SetupMain {
 //
 //            ownerService.addPolicy(keyId, enclaveMeasurements);
         } finally {
-//            TerminateInstancesRequest tir = TerminateInstancesRequest.builder()
-//                    .instanceIds(ec2Instance.getInstanceId())
-//                    .build();
-//            LOG.info("terminating instance: " + ec2Instance);
-//            ec2Client.terminateInstances(tir);
+            TerminateInstancesRequest tir = TerminateInstancesRequest.builder()
+                    .instanceIds(ec2Instance.getInstanceId())
+                    .build();
+            LOG.info("terminating instance: " + ec2Instance);
+            ec2Client.terminateInstances(tir);
         }
     }
 }
