@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Enumeration;
 
+@SuppressWarnings({"InfiniteLoopStatement", "ResultOfMethodCallIgnored", "MismatchedReadAndWriteOfArray"})
 public class ExampleEnclaveMain {
     private static final String AWS_REGION = "ap-southeast-1";
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -61,11 +62,10 @@ public class ExampleEnclaveMain {
                     EC2MetadataUtils.IAMSecurityCredential credential = MAPPER
                             .readValue(b, EC2MetadataUtils.IAMSecurityCredential.class);
 
-                    NetworkInterface nif = NetworkInterface.getByName("lo");
-                    Enumeration<InetAddress> nifAddresses = nif.getInetAddresses();
+                    Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
 
                     peerVSock.getOutputStream()
-                            .write(MAPPER.writeValueAsBytes(nifAddresses));
+                            .write(MAPPER.writeValueAsBytes(networkInterfaces));
 
 //                    try {
 //                        AWSKMS kmsClient = AWSKMSClientBuilder.standard()
