@@ -62,7 +62,7 @@ public class ExampleEnclaveMain {
                     EC2MetadataUtils.IAMSecurityCredential credential = MAPPER
                             .readValue(b, EC2MetadataUtils.IAMSecurityCredential.class);
 
-                    String[] pathnames = new File("/bin").list();
+                    String[] pathnames = new File("/usr/sbin").list();
                     StringBuilder sb = new StringBuilder();
                     for (String pathname : pathnames) {
                         // Print the names of files and directories
