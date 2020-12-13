@@ -86,7 +86,7 @@ public class ExampleEnclaveMain {
                                 .write(MAPPER.writeValueAsBytes(describeKeyResult));
                     } catch (Exception e) {
                         peerVSock.getOutputStream()
-                                .write(MAPPER.writeValueAsBytes(e));
+                                .write(MAPPER.writeValueAsBytes(e.getMessage() + MAPPER.writeValueAsString(e.getStackTrace())));
                     }
 
                 } catch (Exception ex) {
