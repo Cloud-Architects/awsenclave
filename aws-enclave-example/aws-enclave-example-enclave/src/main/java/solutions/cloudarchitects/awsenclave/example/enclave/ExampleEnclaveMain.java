@@ -1,8 +1,9 @@
 package solutions.cloudarchitects.awsenclave.example.enclave;
 
+import com.amazonaws.ClientConfiguration;
+import com.amazonaws.SystemDefaultDnsResolver;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicSessionCredentials;
-import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.kms.AWSKMS;
 import com.amazonaws.services.kms.AWSKMSClientBuilder;
 import com.amazonaws.services.kms.model.AliasListEntry;
@@ -16,8 +17,10 @@ import solutions.cloudarchitects.vsockj.VSock;
 import solutions.cloudarchitects.vsockj.VSockAddress;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 public class ExampleEnclaveMain {
     private static final String AWS_REGION = "ap-southeast-1";
@@ -49,9 +52,18 @@ public class ExampleEnclaveMain {
                     EC2MetadataUtils.IAMSecurityCredential credential = MAPPER
                             .readValue(b, EC2MetadataUtils.IAMSecurityCredential.class);
                     AWSKMS kmsClient = AWSKMSClientBuilder.standard()
-                            .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(
-                                    "kms.ap-southeast-1.amazonaws.com:8433", AWS_REGION
-                            ))
+                            .withClientConfiguration(new ClientConfiguration()
+                                .withDnsResolver(new SystemDefaultDnsResolver() {
+                                    @Override
+                                    public InetAddress[] resolve(String host) throws UnknownHostException {
+                                        if ("kms.ap-southeast-1.amazonaws.com".equals(host)) {
+                                            return new InetAddress[]{InetAddress.getByName("127.0.0.1")};
+                                        } else {
+                                            return super.resolve(host);
+                                        }
+                                    }
+                                }))
+                            .withRegion(AWS_REGION)
                             .withCredentials(new AWSStaticCredentialsProvider(
                                     new BasicSessionCredentials(credential.accessKeyId, credential.secretAccessKey, credential.token)))
                             .build();

@@ -92,10 +92,6 @@
                                 <from>target/nar/lib/amd64-Linux-gpp/jni</from>
                                 <into>/usr/lib</into>
                             </path>
-                            <path>
-                                <from>src/main/resources/etc</from>
-                                <into>/etc</into>
-                            </path>
                         </paths>
                     </extraDirectories>
                 </configuration>
