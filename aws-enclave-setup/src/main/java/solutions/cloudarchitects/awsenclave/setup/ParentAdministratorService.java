@@ -67,7 +67,7 @@ public final class ParentAdministratorService {
         }
     }
 
-    public void prepareSampleEnclave(KeyPair keyPair, Ec2Instance ec2Instance) {
+    public void prepareSampleDockerImage(KeyPair keyPair, Ec2Instance ec2Instance) {
         String setupScript = "nitro-cli --version\n" +
                 "sudo systemctl start nitro-enclaves-allocator.service && sudo systemctl enable nitro-enclaves-allocator.service\n" +
                 "sudo systemctl start docker && sudo systemctl enable docker\n" +
@@ -76,13 +76,13 @@ public final class ParentAdministratorService {
 
                 "git clone https://github.com/Cloud-Architects/awsenclave\n" +
                 "cd awsenclave\n" +
-                "docker build deploy/enclave -t aws-enclave-example-enclave\n" +
                 "./mvnw -Dmaven.artifact.threads=30 install\n" +
                 "./mvnw -f aws-enclave-example/aws-enclave-example-enclave/pom.xml -Dmaven.artifact.threads=30 clean nar:nar-download nar:nar-unpack package jib:dockerBuild\n" +
+                "docker build deploy/enclave -t aws-enclave-example-enclave\n" +
                 "exit\n";
 
         try {
-            LOG.info("running enclave");
+            LOG.info("building Docker image");
             commandRunner.runCommand(keyPair, ec2Instance.getDomainAddress(), setupScript, false);
         } catch (JSchException | IOException e) {
             throw new IllegalStateException(e.getMessage(), e);
