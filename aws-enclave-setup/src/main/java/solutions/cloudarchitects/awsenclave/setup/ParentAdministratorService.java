@@ -251,7 +251,7 @@ public final class ParentAdministratorService {
     public void runVSockProxy(KeyPair keyPair, Ec2Instance ec2Instance, String domain) {
         String setupScript =
                 "cd awsenclave\n" +
-                        String.format("nohup vsock-proxy 8433 %s 443 &\n", domain) +
+                        String.format("nohup vsock-proxy 8443 %s 443 &\n", domain) +
                         "exit\n";
         try {
             LOG.info("running vsock proxy");

@@ -31,13 +31,13 @@ public class ExampleEnclaveMain {
     public static void main(String[] args) throws IOException {
         final String[] proxyExceptionMessage = {"None"};
         InetAddress loopbackAddress = InetAddress.getLoopbackAddress();
-        ServerSocket serverSocket = new ServerSocket(8433, 50, loopbackAddress);
+        ServerSocket serverSocket = new ServerSocket(8443, 50, loopbackAddress);
         new Thread(() -> {
             try {
                 LOG.info(String.format("Running proxy server on %s:%s", loopbackAddress, serverSocket.getLocalPort()));
                 while (true) {
                     Socket clientSocket = serverSocket.accept();
-                    new Thread(new SocketVSockProxy(clientSocket, 8433)).start();
+                    new Thread(new SocketVSockProxy(clientSocket, 8443)).start();
                 }
             } catch (IOException e) {
                 LOG.warn(e.getMessage(), e);
@@ -93,7 +93,6 @@ public class ExampleEnclaveMain {
                                 .write(MAPPER.writeValueAsBytes(proxyExceptionMessage[0] + e.getMessage()
                                         + MAPPER.writeValueAsString(e.getStackTrace())));
                     }
-
                 } catch (Exception e) {
                     LOG.warn(e.getMessage(), e);
                 }
