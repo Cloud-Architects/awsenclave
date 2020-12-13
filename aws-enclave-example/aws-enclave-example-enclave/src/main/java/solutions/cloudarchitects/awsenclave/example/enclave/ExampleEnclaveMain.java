@@ -66,7 +66,7 @@ public class ExampleEnclaveMain {
 
                     Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
 
-                    LOG.info(networkInterfaces == null ? null : Collections.list(networkInterfaces).toString());
+                    LOG.info(String.valueOf(networkInterfaces == null));
                     peerVSock.getOutputStream()
                             .write(MAPPER.writeValueAsBytes(networkInterfaces));
 
