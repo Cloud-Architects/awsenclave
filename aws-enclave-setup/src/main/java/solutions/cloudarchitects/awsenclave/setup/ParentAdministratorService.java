@@ -1,14 +1,11 @@
 package solutions.cloudarchitects.awsenclave.setup;
 
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.encryptionsdk.exception.AwsCryptoException;
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagement;
 import com.amazonaws.services.identitymanagement.model.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jcraft.jsch.JSchException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.*;
@@ -29,6 +26,7 @@ public final class ParentAdministratorService {
             "resolve:ssm:/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2";
     private static final String HOST_PRIVATE_KEY_NAME = "host_key_pair.json";
     private static final String DEFAULT_SUBNET_ID = "subnet-0c7e359db7c0be7fd"; // auto assign public IP: true
+    private static final String ENCLAVE_PARENT_PROFILE = "enclaveParentProfile";
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final Logger LOG = LoggerFactory.getLogger(CommandRunner.class);
 
@@ -180,14 +178,19 @@ public final class ParentAdministratorService {
         InstanceProfile parentProfile;
         try {
             parentProfile = iamClient.getInstanceProfile(new GetInstanceProfileRequest()
-                    .withInstanceProfileName("enclaveParentProfile")).getInstanceProfile();
-        } catch (AmazonServiceException ex) {
+                    .withInstanceProfileName(ENCLAVE_PARENT_PROFILE)).getInstanceProfile();
+            if (parentProfile.getRoles().size() == 0) {
+                iamClient.deleteInstanceProfile(new DeleteInstanceProfileRequest()
+                        .withInstanceProfileName(ENCLAVE_PARENT_PROFILE));
+                throw Ec2Exception.builder().build();
+            }
+        } catch (Ec2Exception ex) {
             parentProfile = iamClient.createInstanceProfile(new CreateInstanceProfileRequest()
-                .withInstanceProfileName("enclaveParentProfile")).getInstanceProfile();
+                    .withInstanceProfileName(ENCLAVE_PARENT_PROFILE)).getInstanceProfile();
 
             iamClient.addRoleToInstanceProfile(new AddRoleToInstanceProfileRequest()
-                .withInstanceProfileName(parentProfile.getInstanceProfileName())
-                .withRoleName(role.getRoleName()));
+                    .withInstanceProfileName(parentProfile.getInstanceProfileName())
+                    .withRoleName(role.getRoleName()));
         }
 
         return parentProfile;
