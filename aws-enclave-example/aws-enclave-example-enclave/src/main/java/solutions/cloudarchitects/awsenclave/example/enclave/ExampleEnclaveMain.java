@@ -35,6 +35,7 @@ public class ExampleEnclaveMain {
     private static final Logger LOG = LoggerFactory.getLogger(ExampleEnclaveMain.class);
 
     public static void main(String[] args) throws IOException {
+        LOG.info(execCmd("ifconfig lo 127.0.0.1"));
 
         final String[] proxyExceptionMessage = {"None"};
         InetAddress loopbackAddress = InetAddress.getLoopbackAddress();
