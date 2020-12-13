@@ -44,9 +44,10 @@ public class SocketVSockProxy implements Runnable {
             e.printStackTrace();
         } finally {
             try {
+                clientSocket.close();
                 server.close();
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (IOException ex) {
+                ex.printStackTrace();
             }
         }
         clientSocket.close();
@@ -62,6 +63,12 @@ public class SocketVSockProxy implements Runnable {
                     outToServer.write(request, 0, bytes_read);
                 }
             } catch (IOException e) {
+                try {
+                    clientSocket.close();
+                    server.close();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
                 e.printStackTrace();
             }
         }).start();
