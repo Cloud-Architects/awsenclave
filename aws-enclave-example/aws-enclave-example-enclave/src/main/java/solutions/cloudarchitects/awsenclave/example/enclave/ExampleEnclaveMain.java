@@ -1,9 +1,11 @@
 package solutions.cloudarchitects.awsenclave.example.enclave;
 
 import com.amazonaws.ClientConfiguration;
+import com.amazonaws.DnsResolver;
 import com.amazonaws.SystemDefaultDnsResolver;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicSessionCredentials;
+import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.kms.AWSKMS;
 import com.amazonaws.services.kms.AWSKMSClientBuilder;
 import com.amazonaws.services.kms.model.AliasListEntry;
@@ -57,13 +59,15 @@ public class ExampleEnclaveMain {
                                     @Override
                                     public InetAddress[] resolve(String host) throws UnknownHostException {
                                         if ("kms.ap-southeast-1.amazonaws.com".equals(host)) {
-                                            return new InetAddress[]{InetAddress.getByName("127.0.0.1")};
+                                            return new InetAddress[]{InetAddress.getByName("127.0.0.1")}; // for host redirection
                                         } else {
                                             return super.resolve(host);
                                         }
                                     }
                                 }))
-                            .withRegion(AWS_REGION)
+                            .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(
+                                    "kms.ap-southeast-1.amazonaws.com:8433", AWS_REGION // for port redirection
+                            ))
                             .withCredentials(new AWSStaticCredentialsProvider(
                                     new BasicSessionCredentials(credential.accessKeyId, credential.secretAccessKey, credential.token)))
                             .build();
