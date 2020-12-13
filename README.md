@@ -21,7 +21,7 @@ or
 The setup right now supports one case - KMS proxy. An overview diagram is shown below:
 ![proxy overview](docs/aws-enclave-proxy.png)
 
-To run the example Host + enclave setup and verify communication, run the following command:
+To run the example Host + enclave setup and verify communication, run the following command (ensure default credentials allow you to create new EC2 instances, create IAM roles and KMS key):
 ```shell
 ./mvnw -f aws-enclave-setup/pom.xml compile exec:exec
 ```
