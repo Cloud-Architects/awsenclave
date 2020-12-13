@@ -105,6 +105,11 @@ public final class OwnerService {
                                     "        \"Effect\": \"Allow\"," +
                                     "        \"Action\": \"kms:listAliases\"," +
                                     "        \"Resource\": \"*\"" +
+                                    "    }," +
+                                    "    {" +
+                                    "        \"Effect\": \"Allow\"," +
+                                    "        \"Action\": \"kms:DescribeKey\"," +
+                                    "        \"Resource\": \"*\"" +
                                     "    }" +
                                     "   ]" +
                                     "}"
