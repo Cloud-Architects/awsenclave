@@ -254,7 +254,7 @@ public final class ParentAdministratorService {
                         String.format("nohup vsock-proxy 8433 %s 443 &\n", domain) +
                         "exit\n";
         try {
-            LOG.info("waiting to run client");
+            LOG.info("running vsock proxy");
             commandRunner.runCommand(keyPair, ec2Instance.getDomainAddress(), setupScript, false);
         } catch (JSchException | IOException e) {
             throw new IllegalStateException(e.getMessage(), e);
@@ -264,10 +264,11 @@ public final class ParentAdministratorService {
     public void runHost(KeyPair keyPair, Ec2Instance ec2Instance, String enclaveCid) {
         String setupScript =
                 "cd awsenclave\n" +
-                        String.format("./mvnw -f aws-enclave-example/aws-enclave-example-host/pom.xml -Dmaven.artifact.threads=30 clean compile exec:exec -Denclave.cid=%s\n", enclaveCid) +
+                        String.format("./mvnw -f aws-enclave-example/aws-enclave-example-host/pom.xml compile exec:exec -Denclave.cid=%s\n", enclaveCid) +
+                        "exit\n" +
                         "exit\n";
         try {
-            LOG.info("waiting to run client");
+            LOG.info("running host");
             commandRunner.runCommand(keyPair, ec2Instance.getDomainAddress(), setupScript, false);
         } catch (JSchException | IOException e) {
             throw new IllegalStateException(e.getMessage(), e);
