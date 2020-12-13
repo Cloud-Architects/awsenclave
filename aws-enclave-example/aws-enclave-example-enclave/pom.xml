@@ -88,7 +88,7 @@
                 <version>2.7.0</version>
                 <configuration>
                     <from>
-                        <image>enclave-base</image>
+                        <image>localhost:5000/enclave-base</image>
                     </from>
                     <to>
                         <image>aws-enclave-example-enclave:latest</image>
