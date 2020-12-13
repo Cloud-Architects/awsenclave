@@ -76,7 +76,7 @@ public final class ParentAdministratorService {
 
                 "git clone https://github.com/Cloud-Architects/awsenclave\n" +
                 "cd awsenclave\n" +
-                "docker build deploy/enclave -t enclave-base\n" +
+                "docker build deploy/enclave -t aws-enclave-example-enclave\n" +
                 "./mvnw -Dmaven.artifact.threads=30 install\n" +
                 "./mvnw -f aws-enclave-example/aws-enclave-example-enclave/pom.xml -Dmaven.artifact.threads=30 clean nar:nar-download nar:nar-unpack package jib:dockerBuild\n" +
                 "exit\n";

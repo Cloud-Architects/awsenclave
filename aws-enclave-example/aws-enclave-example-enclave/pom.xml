@@ -88,10 +88,10 @@
                 <version>2.7.0</version>
                 <configuration>
                     <from>
-                        <image>docker://enclave-base</image>
+                        <image>amazoncorretto:8u275</image>
                     </from>
                     <to>
-                        <image>aws-enclave-example-enclave:latest</image>
+                        <image>enclave-base:latest</image>
                     </to>
                     <container>
                         <mainClass>solutions.cloudarchitects.awsenclave.example.enclave.ExampleEnclaveMain</mainClass>
