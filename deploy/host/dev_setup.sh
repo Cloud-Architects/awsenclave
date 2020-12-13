@@ -10,6 +10,7 @@ cd awsenclave
 nitro-cli terminate-enclave --all
 git pull
 ./mvnw -f aws-enclave-example/aws-enclave-example-enclave/pom.xml compile package jib:dockerBuild
+docker build deploy/enclave -t aws-enclave-example-enclave
 nitro-cli build-enclave --docker-uri aws-enclave-example-enclave:latest --output-file sample.eif
 nitro-cli run-enclave --cpu-count 2 --memory 3072 --eif-path sample.eif --enclave-cid 10 --debug-mode
 
