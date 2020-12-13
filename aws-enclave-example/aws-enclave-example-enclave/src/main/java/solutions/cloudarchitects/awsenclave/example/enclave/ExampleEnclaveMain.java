@@ -24,6 +24,8 @@ import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 
 @SuppressWarnings({"InfiniteLoopStatement", "ResultOfMethodCallIgnored", "MismatchedReadAndWriteOfArray"})
@@ -64,6 +66,7 @@ public class ExampleEnclaveMain {
 
                     Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
 
+                    LOG.info(Collections.list(networkInterfaces).toString());
                     peerVSock.getOutputStream()
                             .write(MAPPER.writeValueAsBytes(networkInterfaces));
 
