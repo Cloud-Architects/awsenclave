@@ -84,7 +84,7 @@
                         <image>aws-enclave-example-enclave:latest</image>
                     </to>
                     <container>
-                        <mainClass>solutions.cloudarchitects.awsenclave.example.Main</mainClass>
+                        <mainClass>solutions.cloudarchitects.awsenclave.example.enclave.ExampleEnclaveMain</mainClass>
                     </container>
                     <extraDirectories>
                         <paths>
@@ -119,7 +119,7 @@
                         <!-- automatically creates the classpath using all project dependencies,
                              also adding the project build directory -->
                         <classpath/>
-                        <argument>solutions.cloudarchitects.awsenclave.example.Main</argument>
+                        <argument>solutions.cloudarchitects.awsenclave.example.enclave.ExampleEnclaveMain</argument>
                     </arguments>
                 </configuration>
             </plugin>

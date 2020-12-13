@@ -100,7 +100,7 @@
                         <!-- automatically creates the classpath using all project dependencies,
                              also adding the project build directory -->
                         <classpath/>
-                        <argument>solutions.cloudarchitects.awsenclave.setup.Main</argument>
+                        <argument>solutions.cloudarchitects.awsenclave.setup.SetupMain</argument>
                     </arguments>
                 </configuration>
             </plugin>

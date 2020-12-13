@@ -80,7 +80,7 @@
                         <!-- automatically creates the classpath using all project dependencies,
                              also adding the project build directory -->
                         <classpath/>
-                        <argument>solutions.cloudarchitects.awsenclave.example.Main</argument>
+                        <argument>solutions.cloudarchitects.awsenclave.example.host.ExampleHostMain</argument>
                         <argument>${enclave.cid}</argument>
                     </arguments>
                 </configuration>

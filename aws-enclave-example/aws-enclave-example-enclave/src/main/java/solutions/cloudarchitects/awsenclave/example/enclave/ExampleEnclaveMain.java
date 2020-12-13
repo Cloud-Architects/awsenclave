@@ -1,4 +1,4 @@
-package solutions.cloudarchitects.awsenclave.example;
+package solutions.cloudarchitects.awsenclave.example.enclave;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicSessionCredentials;
@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class Main {
+public class ExampleEnclaveMain {
     private static final String AWS_REGION = "ap-southeast-1";
     private static final ObjectMapper MAPPER = new ObjectMapper();
 

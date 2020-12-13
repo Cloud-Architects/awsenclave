@@ -1,4 +1,4 @@
-package solutions.cloudarchitects.awsenclave.example;
+package solutions.cloudarchitects.awsenclave.example.host;
 
 import com.amazonaws.util.EC2MetadataUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
 
-public class Main {
+public class ExampleHostMain {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     public static void main(String[] args) throws IOException {

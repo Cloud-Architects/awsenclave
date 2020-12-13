@@ -13,7 +13,7 @@ import solutions.cloudarchitects.awsenclave.setup.model.Ec2Instance;
 import solutions.cloudarchitects.awsenclave.setup.model.EnclaveMeasurements;
 import solutions.cloudarchitects.awsenclave.setup.model.KeyPair;
 
-class Main {
+class SetupMain {
     private static final Logger LOG = LoggerFactory.getLogger(CommandRunner.class);
 
     public static void main(String... args) {
