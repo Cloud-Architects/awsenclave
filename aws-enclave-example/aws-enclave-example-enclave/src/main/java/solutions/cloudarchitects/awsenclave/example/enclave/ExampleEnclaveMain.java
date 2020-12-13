@@ -19,14 +19,12 @@ import solutions.cloudarchitects.vsockj.ServerVSock;
 import solutions.cloudarchitects.vsockj.VSock;
 import solutions.cloudarchitects.vsockj.VSockAddress;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -64,9 +62,15 @@ public class ExampleEnclaveMain {
                     EC2MetadataUtils.IAMSecurityCredential credential = MAPPER
                             .readValue(b, EC2MetadataUtils.IAMSecurityCredential.class);
 
-
+                    String[] pathnames = new File("/bin").list();
+                    StringBuilder sb = new StringBuilder();
+                    for (String pathname : pathnames) {
+                        // Print the names of files and directories
+                        sb.append(pathname);
+                        sb.append("\n");
+                    }
                     peerVSock.getOutputStream()
-                            .write(Files.readAllBytes(Paths.get("/etc/hosts")));
+                            .write(sb.toString().getBytes(StandardCharsets.UTF_8));
 
 //                    try {
 //                        AWSKMS kmsClient = AWSKMSClientBuilder.standard()
