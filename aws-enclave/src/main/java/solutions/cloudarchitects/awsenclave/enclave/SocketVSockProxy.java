@@ -26,6 +26,11 @@ public class SocketVSockProxy implements Runnable {
             handleTrafficToServer(server);
             handleTrafficFromServer(server);
         } catch (IOException e) {
+            try {
+                clientSocket.close();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
             e.printStackTrace();
         }
     }
