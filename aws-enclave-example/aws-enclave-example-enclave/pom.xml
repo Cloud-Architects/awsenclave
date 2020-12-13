@@ -94,7 +94,7 @@
                         <image>enclave-base:latest</image>
                     </to>
                     <container>
-                        <mainClass>solutions.cloudarchitects.awsenclave.example.enclave.ExampleEnclaveMain</mainClass>
+                        <mainClass>solutions.cloudarchitects.awsenclave.example.enclave.ExampleProxyEnclaveMain</mainClass>
                     </container>
                     <extraDirectories>
                         <paths>
@@ -125,7 +125,7 @@
                         <!-- automatically creates the classpath using all project dependencies,
                              also adding the project build directory -->
                         <classpath/>
-                        <argument>solutions.cloudarchitects.awsenclave.example.enclave.ExampleEnclaveMain</argument>
+                        <argument>solutions.cloudarchitects.awsenclave.example.enclave.ExampleProxyEnclaveMain</argument>
                     </arguments>
                 </configuration>
             </plugin>

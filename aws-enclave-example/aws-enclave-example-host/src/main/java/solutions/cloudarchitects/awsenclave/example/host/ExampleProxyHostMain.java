@@ -12,9 +12,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
 
-public class ExampleHostMain {
+public class ExampleProxyHostMain {
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final Logger LOG = LoggerFactory.getLogger(ExampleHostMain.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ExampleProxyHostMain.class);
 
     public static void main(String[] args) throws IOException {
         if (args.length != 1) {

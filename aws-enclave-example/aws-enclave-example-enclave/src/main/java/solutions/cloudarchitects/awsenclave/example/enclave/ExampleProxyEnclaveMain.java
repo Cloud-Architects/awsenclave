@@ -23,10 +23,10 @@ import java.io.*;
 import java.net.*;
 
 @SuppressWarnings({"InfiniteLoopStatement", "ResultOfMethodCallIgnored", "MismatchedReadAndWriteOfArray"})
-public class ExampleEnclaveMain {
+public class ExampleProxyEnclaveMain {
     private static final String AWS_REGION = "ap-southeast-1";
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final Logger LOG = LoggerFactory.getLogger(ExampleEnclaveMain.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ExampleProxyEnclaveMain.class);
 
     public static void main(String[] args) throws IOException {
         final String[] proxyExceptionMessage = {"None"};
