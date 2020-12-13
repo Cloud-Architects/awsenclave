@@ -35,11 +35,11 @@ public class ExampleEnclaveMain {
 
     public static void main(String[] args) throws IOException {
         final String[] proxyExceptionMessage = {"None"};
-        ServerSocket serverSocket = new ServerSocket(8433);
-        InetAddress serverAddress = serverSocket.getInetAddress();
+        InetAddress loopbackAddress = InetAddress.getLoopbackAddress();
+        ServerSocket serverSocket = new ServerSocket(8433, 50, loopbackAddress);
         new Thread(() -> {
             try {
-                LOG.info(String.format("Running proxy server on %s:%s", serverAddress, serverSocket.getLocalPort()));
+                LOG.info(String.format("Running proxy server on %s:%s", loopbackAddress, serverSocket.getLocalPort()));
                 while (true) {
                     Socket clientSocket = serverSocket.accept();
                     new Thread(new SocketVSockProxy(clientSocket, 8433)).start();
@@ -69,7 +69,7 @@ public class ExampleEnclaveMain {
                                             @Override
                                             public InetAddress[] resolve(String host) throws UnknownHostException {
                                                 if ("kms.ap-southeast-1.amazonaws.com".equals(host)) {
-                                                    return new InetAddress[]{serverAddress}; // for host redirection
+                                                    return new InetAddress[]{loopbackAddress}; // for host redirection
                                                 } else {
                                                     return super.resolve(host);
                                                 }
