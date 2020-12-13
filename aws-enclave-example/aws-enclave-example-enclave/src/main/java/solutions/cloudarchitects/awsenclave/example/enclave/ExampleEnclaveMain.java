@@ -76,7 +76,7 @@ public class ExampleEnclaveMain {
                                             }
                                         }))
                                 .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(
-                                        "kms.ap-southeast-1.amazonaws.com:8433", AWS_REGION // for port redirection
+                                        "localhost:8433", AWS_REGION // for port redirection
                                 ))
                                 .withCredentials(new AWSStaticCredentialsProvider(
                                         new BasicSessionCredentials(credential.accessKeyId, credential.secretAccessKey, credential.token)))
