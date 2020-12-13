@@ -29,20 +29,17 @@ public class ExampleEnclaveMain {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     public static void main(String[] args) throws IOException {
-        final String[] proxyExceptionMessage = {""};
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    ServerSocket serverSocket = new ServerSocket(8433);
-                    System.out.println("Running proxy server on port " + serverSocket.getLocalPort());
-                    while (true) {
-                        Socket clientSocket = serverSocket.accept();
-                        new Thread(new SocketVSockProxy(clientSocket, 8433)).start();
-                    }
-                } catch (IOException e) {
-                    proxyExceptionMessage[0] = e.getMessage();
+        final String[] proxyExceptionMessage = {"None"};
+        new Thread(() -> {
+            try {
+                ServerSocket serverSocket = new ServerSocket(8433);
+                System.out.println("Running proxy server on port " + serverSocket.getLocalPort());
+                while (true) {
+                    Socket clientSocket = serverSocket.accept();
+                    new Thread(new SocketVSockProxy(clientSocket, 8433)).start();
                 }
+            } catch (IOException e) {
+                proxyExceptionMessage[0] = e.getMessage();
             }
         }).start();
 
