@@ -8,7 +8,7 @@ nitro-cli console --enclave-id i-097832b43d6f0ba34-enc1765c0aa14a79e1
 cd awsenclave
 
 nitro-cli terminate-enclave --all
-git pull
+git checkout . && git pull
 ./mvnw -f aws-enclave-example/aws-enclave-example-enclave/pom.xml compile package jib:dockerBuild
 docker build deploy/enclave -t aws-enclave-example-enclave
 nitro-cli build-enclave --docker-uri aws-enclave-example-enclave:latest --output-file sample.eif

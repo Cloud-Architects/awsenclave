@@ -65,48 +65,42 @@ public class ExampleEnclaveMain {
                     EC2MetadataUtils.IAMSecurityCredential credential = MAPPER
                             .readValue(b, EC2MetadataUtils.IAMSecurityCredential.class);
 
-                    Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+                    try {
+                        AWSKMS kmsClient = AWSKMSClientBuilder.standard()
+                                .withClientConfiguration(new ClientConfiguration()
+                                        .withDnsResolver(new SystemDefaultDnsResolver() {
+                                            @Override
+                                            public InetAddress[] resolve(String host) throws UnknownHostException {
+                                                if ("kms.ap-southeast-1.amazonaws.com".equals(host)) {
+                                                    return new InetAddress[]{loopbackAddress}; // for host redirection
+                                                } else {
+                                                    return super.resolve(host);
+                                                }
+                                            }
+                                        }))
+                                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(
+                                        "kms.ap-southeast-1.amazonaws.com", AWS_REGION // for port redirection
+                                ))
+                                .withCredentials(new AWSStaticCredentialsProvider(
+                                        new BasicSessionCredentials(credential.accessKeyId, credential.secretAccessKey, credential.token)))
+                                .build();
 
-                    LOG.info(String.valueOf(networkInterfaces == null));
-                    peerVSock.getOutputStream()
-                            .write(MAPPER.writeValueAsBytes(networkInterfaces));
+                        String enclaveKeyId = kmsClient.listAliases().getAliases().stream()
+                                .filter(alias -> alias.getAliasName().equals("alias/enclave"))
+                                .map(AliasListEntry::getTargetKeyId)
+                                .findAny().get();
 
-//                    try {
-//                        AWSKMS kmsClient = AWSKMSClientBuilder.standard()
-//                                .withClientConfiguration(new ClientConfiguration()
-//                                        .withDnsResolver(new SystemDefaultDnsResolver() {
-//                                            @Override
-//                                            public InetAddress[] resolve(String host) throws UnknownHostException {
-//                                                if ("kms.ap-southeast-1.amazonaws.com".equals(host)) {
-//                                                    return new InetAddress[]{loopbackAddress}; // for host redirection
-//                                                } else {
-//                                                    return super.resolve(host);
-//                                                }
-//                                            }
-//                                        }))
-//                                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(
-//                                        "localhost:8433", AWS_REGION // for port redirection
-//                                ))
-//                                .withCredentials(new AWSStaticCredentialsProvider(
-//                                        new BasicSessionCredentials(credential.accessKeyId, credential.secretAccessKey, credential.token)))
-//                                .build();
-//
-//                        String enclaveKeyId = kmsClient.listAliases().getAliases().stream()
-//                                .filter(alias -> alias.getAliasName().equals("alias/enclave"))
-//                                .map(AliasListEntry::getTargetKeyId)
-//                                .findAny().get();
-//
-//                        DescribeKeyResult describeKeyResult = kmsClient.describeKey(new DescribeKeyRequest()
-//                                .withKeyId(enclaveKeyId));
-//
-//                        peerVSock.getOutputStream()
-//                                .write(MAPPER.writeValueAsBytes(describeKeyResult));
-//                    } catch (Exception e) {
-//                        LOG.warn(e.getMessage(), e);
-//                        peerVSock.getOutputStream()
-//                                .write(MAPPER.writeValueAsBytes(proxyExceptionMessage[0] + e.getMessage()
-//                                        + MAPPER.writeValueAsString(e.getStackTrace())));
-//                    }
+                        DescribeKeyResult describeKeyResult = kmsClient.describeKey(new DescribeKeyRequest()
+                                .withKeyId(enclaveKeyId));
+
+                        peerVSock.getOutputStream()
+                                .write(MAPPER.writeValueAsBytes(describeKeyResult));
+                    } catch (Exception e) {
+                        LOG.warn(e.getMessage(), e);
+                        peerVSock.getOutputStream()
+                                .write(MAPPER.writeValueAsBytes(proxyExceptionMessage[0] + e.getMessage()
+                                        + MAPPER.writeValueAsString(e.getStackTrace())));
+                    }
 
                 } catch (Exception e) {
                     LOG.warn(e.getMessage(), e);
