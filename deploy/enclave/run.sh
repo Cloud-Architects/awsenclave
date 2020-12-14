@@ -3,4 +3,4 @@
 # Assign an IP address to local loopback
 ifconfig lo 127.0.0.1
 
-java -cp /app/resources:/app/classes:/app/libs/* solutions.cloudarchitects.awsenclave.example.enclave.ExampleEnclaveMain
+java -cp /app/resources:/app/classes:/app/libs/* solutions.cloudarchitects.awsenclave.example.enclave.ExampleProxyEnclaveMain
