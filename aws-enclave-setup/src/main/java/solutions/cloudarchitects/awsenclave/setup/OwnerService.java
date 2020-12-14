@@ -124,18 +124,30 @@ public final class OwnerService {
         String policy = "{" +
                 "  \"Version\": \"2012-10-17\"," +
                 "  \"Statement\": [{" +
-                "    \"Sid\": \"Allow access for Enclave Host\"," +
+                "    \"Sid\": \"Allow encryption for Enclave Host\"," +
                 "    \"Effect\": \"Allow\"," +
                 "    \"Principal\": {\"AWS\": \"" + parentRole.getArn() + "\"}," +
                 "    \"Action\": [" +
                 "      \"kms:Encrypt\"," +
                 "      \"kms:GenerateDataKey*\"," +
-                "      \"kms:Decrypt\"," +
                 "      \"kms:DescribeKey\"," +
                 "      \"kms:ReEncrypt*\"" +
                 "    ]," +
                 "    \"Resource\": \"*\"" +
-                "  }]" +
+                "  },{" +
+                "    \"Sid\": \"Enable decrypt from enclave\"," +
+                "    \"Effect\": \"Allow\"," +
+                "    \"Principal\": {\"AWS\": \"" + parentRole.getArn() + "\"}," +
+                "    \"Action\": [" +
+                "      \"kms:Decrypt\"," +
+                "    ]," +
+                "    \"Resource\": \"*\"," +
+                "    \"Condition\": {" +
+                "        \"StringEqualsIgnoreCase\": {" +
+                "          \"kms:RecipientAttestation:ImageSha384\": " + enclaveMeasurements.getPcr0() +
+                "        }" +
+                "    }" +
+                "]]" +
                 "}";
 
         PutKeyPolicyRequest req = new PutKeyPolicyRequest()

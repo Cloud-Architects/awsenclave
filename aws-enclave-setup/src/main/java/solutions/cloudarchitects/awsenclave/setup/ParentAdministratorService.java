@@ -25,7 +25,6 @@ public final class ParentAdministratorService {
     private static final String SSM_RESOLVE_LATEST_AMAZON_LINUX_2 =
             "resolve:ssm:/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2";
     private static final String HOST_PRIVATE_KEY_NAME = "host_key_pair.json";
-    private static final String DEFAULT_SUBNET_ID = "subnet-0c7e359db7c0be7fd"; // auto assign public IP: true
     private static final String ENCLAVE_PARENT_PROFILE = "enclaveParentProfile";
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final Logger LOG = LoggerFactory.getLogger(CommandRunner.class);
@@ -121,7 +120,6 @@ public final class ParentAdministratorService {
     }
 
     public Ec2Instance createParent(KeyPair keyPair) {
-        String securityGroupName = getSecurityGroupName();
         Optional<String> imageId = NitroEnclavesDeveloperAmi.getImageId(region);
         InstanceProfile parentInstanceProfile = getParentInstanceProfile();
 
@@ -133,7 +131,10 @@ public final class ParentAdministratorService {
                 .minCount(1)
                 .maxCount(1)
                 .keyName(keyPair.getKeyName())
-                .subnetId(DEFAULT_SUBNET_ID)
+                .networkInterfaces(InstanceNetworkInterfaceSpecification.builder()
+                        .deviceIndex(0)
+                        .associatePublicIpAddress(true)
+                        .build())
                 .enclaveOptions(EnclaveOptionsRequest.builder()
                         .enabled(true)
                         .build())
@@ -184,7 +185,7 @@ public final class ParentAdministratorService {
                         .withInstanceProfileName(ENCLAVE_PARENT_PROFILE));
                 throw Ec2Exception.builder().build();
             }
-        } catch (Ec2Exception ex) {
+        } catch (NoSuchEntityException ex) {
             parentProfile = iamClient.createInstanceProfile(new CreateInstanceProfileRequest()
                     .withInstanceProfileName(ENCLAVE_PARENT_PROFILE)).getInstanceProfile();
 
