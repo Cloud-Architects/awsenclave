@@ -59,7 +59,7 @@ public final class ParentAdministratorService {
                 "sudo reboot\n" +
                 "exit\n";
         try {
-            LOG.info("waiting for basic setup");
+            LOG.info("waiting for parent setup");
             commandRunner.runCommand(keyPair, domainAddress, setupScript, false);
         } catch (JSchException | IOException e) {
             throw new IllegalStateException(e.getMessage(), e);
@@ -77,7 +77,7 @@ public final class ParentAdministratorService {
                 "cd awsenclave\n" +
                 "./mvnw -Dmaven.artifact.threads=30 install\n" +
                 "./mvnw -f aws-enclave-example/aws-enclave-example-enclave/pom.xml -Dmaven.artifact.threads=30 clean nar:nar-download nar:nar-unpack package jib:dockerBuild\n" +
-                "docker build deploy/enclave -t aws-enclave-example-enclave\n" +
+                "docker build deploy/enclave-proxy -t aws-enclave-example-enclave\n" +
                 "exit\n";
 
         try {
@@ -92,7 +92,7 @@ public final class ParentAdministratorService {
         String setupScript = "nitro-cli build-enclave --docker-uri aws-enclave-example-enclave:latest --output-file sample.eif\n" +
                 "exit\n";
         try {
-            LOG.info("waiting for basic setup");
+            LOG.info("waiting to build an enclave");
             Optional<String> result = commandRunner
                     .runCommand(keyPair, ec2Instance.getDomainAddress(), setupScript, true);
             String logLines = result.orElseThrow(() -> new IllegalStateException("No enclave measurements"));
@@ -111,7 +111,7 @@ public final class ParentAdministratorService {
                         "nitro-cli describe-enclaves\n" +
                         "exit\n";
         try {
-            LOG.info("waiting for basic setup");
+            LOG.info("waiting to run an enclave");
             commandRunner.runCommand(keyPair, ec2Instance.getDomainAddress(), setupScript, false);
             return enclaveId;
         } catch (JSchException | IOException e) {
