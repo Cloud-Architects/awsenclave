@@ -1,10 +1,12 @@
 package solutions.cloudarchitects.awsenclave.example.enclave;
 
+import com.amazonaws.AmazonWebServiceRequest;
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.SystemDefaultDnsResolver;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicSessionCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
+import com.amazonaws.handlers.RequestHandler2;
 import com.amazonaws.services.kms.AWSKMS;
 import com.amazonaws.services.kms.AWSKMSClientBuilder;
 import com.amazonaws.services.kms.model.AliasListEntry;
@@ -73,6 +75,12 @@ public class ExampleProxyEnclaveMain {
                                 .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(
                                         "kms.ap-southeast-1.amazonaws.com:8443", AWS_REGION // for port redirection
                                 ))
+                                .withRequestHandlers(new RequestHandler2() {
+                                    @Override
+                                    public AmazonWebServiceRequest beforeExecution(AmazonWebServiceRequest request) {
+                                        return super.beforeExecution(request);
+                                    }
+                                })
                                 .withCredentials(new AWSStaticCredentialsProvider(
                                         new BasicSessionCredentials(credential.accessKeyId, credential.secretAccessKey, credential.token)))
                                 .build();

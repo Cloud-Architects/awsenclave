@@ -122,6 +122,7 @@ public final class ParentAdministratorService {
     public Ec2Instance createParent(KeyPair keyPair) {
         Optional<String> imageId = NitroEnclavesDeveloperAmi.getImageId(region);
         InstanceProfile parentInstanceProfile = getParentInstanceProfile();
+        String securityGroupName = getSecurityGroupId();
 
         RunInstancesRequest runInstancesRequest = RunInstancesRequest.builder()
                 .instanceType(InstanceType.C5_XLARGE)
@@ -134,6 +135,7 @@ public final class ParentAdministratorService {
                 .networkInterfaces(InstanceNetworkInterfaceSpecification.builder()
                         .deviceIndex(0)
                         .associatePublicIpAddress(true)
+                        .groups(securityGroupName)
                         .build())
                 .enclaveOptions(EnclaveOptionsRequest.builder()
                         .enabled(true)
@@ -197,12 +199,13 @@ public final class ParentAdministratorService {
         return parentProfile;
     }
 
-    private String getSecurityGroupName() {
+    private String getSecurityGroupId() {
         try {
-            amazonEC2Client.describeSecurityGroups(DescribeSecurityGroupsRequest.builder()
-                    .groupNames(DEFAULT_SECURITY_GROUP_NAME)
-                    .build());
-            return DEFAULT_SECURITY_GROUP_NAME;
+            DescribeSecurityGroupsResponse groupsResponse = amazonEC2Client.describeSecurityGroups(
+                    DescribeSecurityGroupsRequest.builder()
+                            .groupNames(DEFAULT_SECURITY_GROUP_NAME)
+                            .build());
+            return groupsResponse.securityGroups().get(0).groupId();
 
         } catch (Ec2Exception exception) {
             CreateSecurityGroupRequest csgr = CreateSecurityGroupRequest.builder()
@@ -210,7 +213,7 @@ public final class ParentAdministratorService {
                     .description("created with awsenclave")
                     .build();
 
-            amazonEC2Client.createSecurityGroup(csgr);
+            CreateSecurityGroupResponse groupResponse = amazonEC2Client.createSecurityGroup(csgr);
 
             IpPermission ipPermission = IpPermission.builder()
                     .ipRanges(Collections.singletonList(IpRange.builder().cidrIp("0.0.0.0/0").build()))
@@ -221,13 +224,13 @@ public final class ParentAdministratorService {
 
             AuthorizeSecurityGroupIngressRequest authorizeSecurityGroupIngressRequest =
                     AuthorizeSecurityGroupIngressRequest.builder()
-                            .groupName("JavaSecurityGroup")
+                            .groupName(DEFAULT_SECURITY_GROUP_NAME)
                             .ipPermissions(ipPermission)
                             .build();
 
             amazonEC2Client.authorizeSecurityGroupIngress(authorizeSecurityGroupIngressRequest);
 
-            return DEFAULT_SECURITY_GROUP_NAME;
+            return groupResponse.groupId();
         }
     }
 
