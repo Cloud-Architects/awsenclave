@@ -1,6 +1,7 @@
 package solutions.cloudarchitects.awsenclave.setup;
 
 import com.amazonaws.AmazonServiceException;
+import com.amazonaws.arn.Arn;
 import com.amazonaws.encryptionsdk.AwsCrypto;
 import com.amazonaws.encryptionsdk.CommitmentPolicy;
 import com.amazonaws.encryptionsdk.CryptoResult;
@@ -70,7 +71,6 @@ public final class OwnerService {
         final CryptoResult<byte[], KmsMasterKey> encryptResult = crypto
                 .encryptData(keyProvider, EXAMPLE_DATA.getBytes(StandardCharsets.UTF_8), encryptionContext);
 
-
         return Base64.getEncoder().encode(encryptResult.getResult());
     }
 
@@ -118,12 +118,42 @@ public final class OwnerService {
         return role;
     }
 
-    public void addPolicy(String keyId, EnclaveMeasurements enclaveMeasurements) {
+    public void addPolicy(String keyId, EnclaveMeasurements enclaveMeasurements, String currentUserArn) {
         Role parentRole = getParentRole();
+        Arn parentRoleArn = Arn.fromString(parentRole.getArn());
         String policyName = "default";
         String policy = "{" +
                 "  \"Version\": \"2012-10-17\"," +
                 "  \"Statement\": [{" +
+                "    \"Sid\": \"Enable IAM User Permissions\"," +
+                "    \"Effect\": \"Allow\"," +
+                "    \"Principal\": {\"AWS\": \"arn:aws:iam::" + parentRoleArn.getAccountId() + ":root\"}," +
+                "    \"Action\": [" +
+                "      \"kms:*\"" +
+                "    ]," +
+                "    \"Resource\": \"*\"" +
+                "  },{" +
+                "    \"Sid\": \"Enable all IAM users key administration (EXAMPLE PURPOSES ONLY!)\"," +
+                "    \"Effect\": \"Allow\"," +
+                "    \"Principal\": {\"AWS\": \"" + currentUserArn + "\"}," +
+                "    \"Action\": [" +
+                "      \"kms:Create\"," +
+                "      \"kms:Describe*\"," +
+                "      \"kms:Enable\"," +
+                "      \"kms:List*\"," +
+                "      \"kms:Put*\"," +
+                "      \"kms:Update*\"," +
+                "      \"kms:Revoke*\"," +
+                "      \"kms:Disable*\"," +
+                "      \"kms:Get*\"," +
+                "      \"kms:Delete*\"," +
+                "      \"kms:TagResource\"," +
+                "      \"kms:UntagResource\"," +
+                "      \"kms:ScheduleKeyDeletion\"," +
+                "      \"kms:CancelKeyDeletion\"" +
+                "    ]," +
+                "    \"Resource\": \"*\"" +
+                "  },{" +
                 "    \"Sid\": \"Allow encryption for Enclave Host\"," +
                 "    \"Effect\": \"Allow\"," +
                 "    \"Principal\": {\"AWS\": \"" + parentRole.getArn() + "\"}," +

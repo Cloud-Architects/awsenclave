@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.TerminateInstancesRequest;
+import software.amazon.awssdk.services.sts.StsClient;
 import solutions.cloudarchitects.awsenclave.setup.model.Ec2Instance;
 import solutions.cloudarchitects.awsenclave.setup.model.EnclaveMeasurements;
 import solutions.cloudarchitects.awsenclave.setup.model.KeyPair;
@@ -25,6 +26,9 @@ class SetupMain {
         AWSKMS kmsClient = AWSKMSClientBuilder.standard()
                 .withRegion(region.id())
                 .build();
+        StsClient stsClient = StsClient.create();
+        String currentUserArn = stsClient.getCallerIdentity().arn();
+
         OwnerService ownerService = new OwnerService(kmsClient, iamClient, region);
         ParentAdministratorService parentAdministratorService =
                 new ParentAdministratorService(ec2Client, iamClient, ownerService, region);
@@ -41,7 +45,7 @@ class SetupMain {
 
             String keyId = ownerService.getKeyId();
             byte[] bytes = ownerService.encryptSample(keyId);
-            ownerService.addPolicy(keyId, enclaveMeasurements);
+            ownerService.addPolicy(keyId, enclaveMeasurements, currentUserArn);
 
             parentAdministratorService.runHost(keyPair, ec2Instance, enclaveId, bytes);
         } finally {
