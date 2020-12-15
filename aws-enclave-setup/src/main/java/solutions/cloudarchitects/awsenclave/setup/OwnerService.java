@@ -171,12 +171,13 @@ public final class OwnerService {
                 "    \"Action\": [" +
                 "      \"kms:Decrypt\"" +
                 "    ]," +
-                "    \"Resource\": \"*\"," +
-                "    \"Condition\": {" +
-                "        \"StringEqualsIgnoreCase\": {" +
-                "          \"kms:RecipientAttestation:ImageSha384\": \"" + enclaveMeasurements.getPcr0() + "\"" +
-                "        }" +
-                "    }" +
+                "    \"Resource\": \"*\"" +
+//                "    \"Resource\": \"*\"," +
+//                "    \"Condition\": {" +
+//                "        \"StringEqualsIgnoreCase\": {" +
+//                "          \"kms:RecipientAttestation:ImageSha384\": \"" + enclaveMeasurements.getPcr0() + "\"" +
+//                "        }" +
+//                "    }" +
                 "}]" +
                 "}";
 
