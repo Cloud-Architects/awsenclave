@@ -144,7 +144,7 @@ public final class OwnerService {
                 "    \"Resource\": \"*\"," +
                 "    \"Condition\": {" +
                 "        \"StringEqualsIgnoreCase\": {" +
-                "          \"kms:RecipientAttestation:ImageSha384\": " + enclaveMeasurements.getPcr0() +
+                "          \"kms:RecipientAttestation:ImageSha384\": \"" + enclaveMeasurements.getPcr0() + "\"" +
                 "        }" +
                 "    }" +
                 "]]" +
