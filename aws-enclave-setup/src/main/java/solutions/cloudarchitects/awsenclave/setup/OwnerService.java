@@ -139,7 +139,7 @@ public final class OwnerService {
                 "    \"Effect\": \"Allow\"," +
                 "    \"Principal\": {\"AWS\": \"" + parentRole.getArn() + "\"}," +
                 "    \"Action\": [" +
-                "      \"kms:Decrypt\"," +
+                "      \"kms:Decrypt\"" +
                 "    ]," +
                 "    \"Resource\": \"*\"," +
                 "    \"Condition\": {" +
@@ -147,7 +147,7 @@ public final class OwnerService {
                 "          \"kms:RecipientAttestation:ImageSha384\": \"" + enclaveMeasurements.getPcr0() + "\"" +
                 "        }" +
                 "    }" +
-                "]]" +
+                "}]" +
                 "}";
 
         PutKeyPolicyRequest req = new PutKeyPolicyRequest()
