@@ -6,18 +6,10 @@ import com.amazonaws.SystemDefaultDnsResolver;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicSessionCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
-import com.amazonaws.encryptionsdk.AwsCrypto;
-import com.amazonaws.encryptionsdk.CommitmentPolicy;
-import com.amazonaws.encryptionsdk.CryptoResult;
-import com.amazonaws.encryptionsdk.kms.KmsMasterKey;
-import com.amazonaws.encryptionsdk.kms.KmsMasterKeyProvider;
 import com.amazonaws.handlers.RequestHandler2;
 import com.amazonaws.services.kms.AWSKMS;
 import com.amazonaws.services.kms.AWSKMSClientBuilder;
-import com.amazonaws.services.kms.model.AliasListEntry;
-import com.amazonaws.services.kms.model.DescribeKeyRequest;
-import com.amazonaws.services.kms.model.DescribeKeyResult;
-import com.amazonaws.util.EC2MetadataUtils;
+import com.amazonaws.services.kms.model.DecryptRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,12 +19,13 @@ import solutions.cloudarchitects.vsockj.ServerVSock;
 import solutions.cloudarchitects.vsockj.VSock;
 import solutions.cloudarchitects.vsockj.VSockAddress;
 
-import java.io.*;
-import java.net.*;
-import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.util.Base64;
-import java.util.Collections;
-import java.util.Map;
 
 @SuppressWarnings({"InfiniteLoopStatement", "ResultOfMethodCallIgnored", "MismatchedReadAndWriteOfArray"})
 public class ExampleProxyEnclaveMain {
@@ -69,8 +62,8 @@ public class ExampleProxyEnclaveMain {
                     Request request = MAPPER.readValue(b, Request.class);
 
                     try {
-                        AWSKMSClientBuilder clientBuilder = getClientBuilder(loopbackAddress, request);
-                        byte[] decryptedSample = decryptSample(clientBuilder, request);
+                        AWSKMS kmsClient = getKmsClient(loopbackAddress, request);
+                        byte[] decryptedSample = decryptSample(kmsClient, request);
 
                         peerVSock.getOutputStream()
                                 .write(decryptedSample);
@@ -89,7 +82,7 @@ public class ExampleProxyEnclaveMain {
         }
     }
 
-    private static AWSKMSClientBuilder getClientBuilder(InetAddress loopbackAddress, Request request) {
+    private static AWSKMS getKmsClient(InetAddress loopbackAddress, Request request) {
         return AWSKMSClientBuilder.standard()
                 .withClientConfiguration(new ClientConfiguration()
                         .withDnsResolver(new SystemDefaultDnsResolver() {
@@ -113,22 +106,17 @@ public class ExampleProxyEnclaveMain {
                 })
                 .withCredentials(new AWSStaticCredentialsProvider(
                         new BasicSessionCredentials(request.getCredential().accessKeyId,
-                                request.getCredential().secretAccessKey, request.getCredential().token)));
+                                request.getCredential().secretAccessKey, request.getCredential().token)))
+
+                .build();
     }
 
-    private static byte[] decryptSample(AWSKMSClientBuilder clientBuilder, Request request) {
-        final AwsCrypto crypto = AwsCrypto.builder()
-                .withCommitmentPolicy(CommitmentPolicy.RequireEncryptRequireDecrypt)
-                .build();
+    private static byte[] decryptSample(AWSKMS kmsClient, Request request) {
+        DecryptRequest req = new DecryptRequest()
+                .withCiphertextBlob(ByteBuffer.wrap(Base64.getDecoder().decode(request.getEncryptedText())))
+                .withKeyId(request.getKeyId());
+        ByteBuffer plainText = kmsClient.decrypt(req).getPlaintext();
 
-        final KmsMasterKeyProvider keyProvider = KmsMasterKeyProvider.builder()
-                .withDefaultRegion(AWS_REGION)
-                .withClientBuilder(clientBuilder)
-                .buildStrict(request.getKeyId());
-        final Map<String, String> encryptionContext = Collections.singletonMap("enclaveName", "aws-enclave");
-        final CryptoResult<byte[], KmsMasterKey> decryptResult = crypto
-                .decryptData(keyProvider, Base64.getDecoder().decode(request.getEncryptedText()));
-
-        return decryptResult.getResult();
+        return plainText.array();
     }
 }
