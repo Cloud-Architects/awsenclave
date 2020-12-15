@@ -6,6 +6,11 @@ import com.amazonaws.SystemDefaultDnsResolver;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicSessionCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
+import com.amazonaws.encryptionsdk.AwsCrypto;
+import com.amazonaws.encryptionsdk.CommitmentPolicy;
+import com.amazonaws.encryptionsdk.CryptoResult;
+import com.amazonaws.encryptionsdk.kms.KmsMasterKey;
+import com.amazonaws.encryptionsdk.kms.KmsMasterKeyProvider;
 import com.amazonaws.handlers.RequestHandler2;
 import com.amazonaws.services.kms.AWSKMS;
 import com.amazonaws.services.kms.AWSKMSClientBuilder;
@@ -24,6 +29,10 @@ import solutions.cloudarchitects.vsockj.VSockAddress;
 
 import java.io.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.Map;
 
 @SuppressWarnings({"InfiniteLoopStatement", "ResultOfMethodCallIgnored", "MismatchedReadAndWriteOfArray"})
 public class ExampleProxyEnclaveMain {
@@ -60,42 +69,11 @@ public class ExampleProxyEnclaveMain {
                     Request request = MAPPER.readValue(b, Request.class);
 
                     try {
-                        AWSKMS kmsClient = AWSKMSClientBuilder.standard()
-                                .withClientConfiguration(new ClientConfiguration()
-                                        .withDnsResolver(new SystemDefaultDnsResolver() {
-                                            @Override
-                                            public InetAddress[] resolve(String host) throws UnknownHostException {
-                                                if ("kms.ap-southeast-1.amazonaws.com".equals(host)) {
-                                                    return new InetAddress[]{loopbackAddress}; // for host redirection
-                                                } else {
-                                                    return super.resolve(host);
-                                                }
-                                            }
-                                        }))
-                                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(
-                                        "kms.ap-southeast-1.amazonaws.com:8443", AWS_REGION // for port redirection
-                                ))
-                                .withRequestHandlers(new RequestHandler2() {
-                                    @Override
-                                    public AmazonWebServiceRequest beforeExecution(AmazonWebServiceRequest request) {
-                                        return super.beforeExecution(request);
-                                    }
-                                })
-                                .withCredentials(new AWSStaticCredentialsProvider(
-                                        new BasicSessionCredentials(request.credential.accessKeyId,
-                                                request.credential.secretAccessKey, request.credential.token)))
-                                .build();
-
-                        String enclaveKeyId = kmsClient.listAliases().getAliases().stream()
-                                .filter(alias -> alias.getAliasName().equals("alias/enclave"))
-                                .map(AliasListEntry::getTargetKeyId)
-                                .findAny().get();
-
-                        DescribeKeyResult describeKeyResult = kmsClient.describeKey(new DescribeKeyRequest()
-                                .withKeyId(enclaveKeyId));
+                        AWSKMSClientBuilder clientBuilder = getClientBuilder(loopbackAddress, request);
+                        byte[] decryptedSample = decryptSample(clientBuilder, request);
 
                         peerVSock.getOutputStream()
-                                .write(MAPPER.writeValueAsBytes(describeKeyResult));
+                                .write(decryptedSample);
                     } catch (Exception e) {
                         LOG.warn(e.getMessage(), e);
                         peerVSock.getOutputStream()
@@ -109,5 +87,48 @@ public class ExampleProxyEnclaveMain {
         } finally {
             server.close();
         }
+    }
+
+    private static AWSKMSClientBuilder getClientBuilder(InetAddress loopbackAddress, Request request) {
+        return AWSKMSClientBuilder.standard()
+                .withClientConfiguration(new ClientConfiguration()
+                        .withDnsResolver(new SystemDefaultDnsResolver() {
+                            @Override
+                            public InetAddress[] resolve(String host) throws UnknownHostException {
+                                if ("kms.ap-southeast-1.amazonaws.com".equals(host)) {
+                                    return new InetAddress[]{loopbackAddress}; // for host redirection
+                                } else {
+                                    return super.resolve(host);
+                                }
+                            }
+                        }))
+                .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(
+                        "kms.ap-southeast-1.amazonaws.com:8443", AWS_REGION // for port redirection
+                ))
+                .withRequestHandlers(new RequestHandler2() {
+                    @Override
+                    public AmazonWebServiceRequest beforeExecution(AmazonWebServiceRequest request) {
+                        return super.beforeExecution(request);
+                    }
+                })
+                .withCredentials(new AWSStaticCredentialsProvider(
+                        new BasicSessionCredentials(request.getCredential().accessKeyId,
+                                request.getCredential().secretAccessKey, request.getCredential().token)));
+    }
+
+    private static byte[] decryptSample(AWSKMSClientBuilder clientBuilder, Request request) {
+        final AwsCrypto crypto = AwsCrypto.builder()
+                .withCommitmentPolicy(CommitmentPolicy.RequireEncryptRequireDecrypt)
+                .build();
+
+        final KmsMasterKeyProvider keyProvider = KmsMasterKeyProvider.builder()
+                .withDefaultRegion(AWS_REGION)
+                .withClientBuilder(clientBuilder)
+                .buildStrict(request.getKeyId());
+        final Map<String, String> encryptionContext = Collections.singletonMap("enclaveName", "aws-enclave");
+        final CryptoResult<byte[], KmsMasterKey> decryptResult = crypto
+                .decryptData(keyProvider, Base64.getDecoder().decode(request.getEncryptedText()));
+
+        return decryptResult.getResult();
     }
 }

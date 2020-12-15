@@ -18,11 +18,12 @@ public class ExampleProxyHostMain {
     private static final Logger LOG = LoggerFactory.getLogger(ExampleProxyHostMain.class);
 
     public static void main(String[] args) throws IOException {
-        if (args.length != 2) {
-            throw new IllegalArgumentException("Pass 2 arguments with CID of the enclave and encrypted text");
+        if (args.length != 3) {
+            throw new IllegalArgumentException("Pass 2 arguments with CID of the enclave, encrypted text and key id");
         }
         int enclave_cid = Integer.parseInt(args[0]);
         String encryptedText = args[1];
+        String keyId = args[2];
 
         try (VSock client = new VSock(new VSockAddress(enclave_cid, 5000))) {
 
@@ -34,7 +35,7 @@ public class ExampleProxyHostMain {
             }
             EC2MetadataUtils.IAMSecurityCredential credential = credentialOptional.get().getValue();
             client.getOutputStream()
-                    .write(MAPPER.writeValueAsBytes(new Request(encryptedText, credential)));
+                    .write(MAPPER.writeValueAsBytes(new Request(encryptedText, keyId, credential)));
             byte[] b = new byte[8192];
             client.getInputStream().read(b, 0, 8192);
             LOG.info("Received: " + new String(b, StandardCharsets.UTF_8));

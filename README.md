@@ -27,6 +27,8 @@ To run the example Host + enclave setup and verify communication, run the follow
 ```
 The command should setup necessary resources and run a host application that calls a service in enclave to invoke a DescribeKey call to KMS.
 
+It's recommended to run example in `ap-southeast-1`. Otherwise, enclave [example](https://github.com/Cloud-Architects/awsenclave/blob/main/aws-enclave-example/aws-enclave-example-enclave/src/main/java/solutions/cloudarchitects/awsenclave/example/enclave/ExampleProxyEnclaveMain.java#L30) code must be adjusted.
+
 ## aws-enclave-example-enclave
 To build (preferable run from host or other linux):
 ```shell

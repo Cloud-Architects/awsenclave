@@ -4,13 +4,20 @@ import com.amazonaws.util.EC2MetadataUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Request {
-    public final String encryptedText;
-    public final EC2MetadataUtils.IAMSecurityCredential credential;
+    private final String encryptedText;
+    private final String keyId;
+    private final EC2MetadataUtils.IAMSecurityCredential credential;
 
     public Request(@JsonProperty("encryptedText") String encryptedText,
+                   @JsonProperty("keyId") String keyId,
                    @JsonProperty("credential") EC2MetadataUtils.IAMSecurityCredential credential) {
         this.encryptedText = encryptedText;
+        this.keyId = keyId;
         this.credential = credential;
+    }
+
+    public String getKeyId() {
+        return keyId;
     }
 
     public String getEncryptedText() {

@@ -267,12 +267,12 @@ public final class ParentAdministratorService {
         }
     }
 
-    public void runHost(KeyPair keyPair, Ec2Instance ec2Instance, String enclaveCid, byte[] bytes) {
+    public void runHost(KeyPair keyPair, Ec2Instance ec2Instance, String enclaveCid, byte[] bytes, String keyId) {
         String encodedEncryptedText = new String(Base64.getEncoder().encode(bytes), StandardCharsets.UTF_8);
         String[] setupScript = {
                 "cd awsenclave",
                 String.format("./mvnw -f aws-enclave-example/aws-enclave-example-host/pom.xml compile exec:exec " +
-                        "-Denclave.cid=%s -Dencrypted.text=%s", enclaveCid, encodedEncryptedText)
+                        "-Denclave.cid=%s -Dencrypted.text=%s -Dkey.id=%s", enclaveCid, encodedEncryptedText, keyId)
         };
         try {
             LOG.info("running host");

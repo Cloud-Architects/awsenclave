@@ -47,7 +47,7 @@ class SetupMain {
             byte[] bytes = ownerService.encryptSample(keyId);
             ownerService.addPolicy(keyId, enclaveMeasurements, currentUserArn);
 
-            parentAdministratorService.runHost(keyPair, ec2Instance, enclaveId, bytes);
+            parentAdministratorService.runHost(keyPair, ec2Instance, enclaveId, bytes, keyId);
         } finally {
             TerminateInstancesRequest tir = TerminateInstancesRequest.builder()
                     .instanceIds(ec2Instance.getInstanceId())
