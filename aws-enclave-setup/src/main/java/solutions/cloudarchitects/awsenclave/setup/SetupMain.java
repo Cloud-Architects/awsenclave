@@ -38,14 +38,12 @@ class SetupMain {
             String enclaveId = parentAdministratorService.runEnclave(keyPair, ec2Instance);
             parentAdministratorService.runVSockProxy(keyPair, ec2Instance,
                     String.format("kms.%s.amazonaws.com", region));
-            parentAdministratorService.runHost(keyPair, ec2Instance, enclaveId);
 
-//            // TODO: update key policy to add measurement attributes
             String keyId = ownerService.getKeyId();
-//            byte[] bytes = ownerService.encryptSample(keyId);
-//            // TODO: store sample data
-//
+            byte[] bytes = ownerService.encryptSample(keyId);
             ownerService.addPolicy(keyId, enclaveMeasurements);
+
+            parentAdministratorService.runHost(keyPair, ec2Instance, enclaveId, bytes);
         } finally {
             TerminateInstancesRequest tir = TerminateInstancesRequest.builder()
                     .instanceIds(ec2Instance.getInstanceId())

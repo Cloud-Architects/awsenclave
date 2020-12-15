@@ -14,6 +14,8 @@ import solutions.cloudarchitects.awsenclave.setup.model.EnclaveMeasurements;
 import solutions.cloudarchitects.awsenclave.setup.model.KeyPair;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Optional;
 
@@ -265,10 +267,12 @@ public final class ParentAdministratorService {
         }
     }
 
-    public void runHost(KeyPair keyPair, Ec2Instance ec2Instance, String enclaveCid) {
+    public void runHost(KeyPair keyPair, Ec2Instance ec2Instance, String enclaveCid, byte[] bytes) {
+        String encodedEncryptedText = new String(Base64.getEncoder().encode(bytes), StandardCharsets.UTF_8);
         String[] setupScript = {
                 "cd awsenclave",
-                String.format("./mvnw -f aws-enclave-example/aws-enclave-example-host/pom.xml compile exec:exec -Denclave.cid=%s", enclaveCid)
+                String.format("./mvnw -f aws-enclave-example/aws-enclave-example-host/pom.xml compile exec:exec " +
+                        "-Denclave.cid=%s -Dencrypted.text=%s", enclaveCid, encodedEncryptedText)
         };
         try {
             LOG.info("running host");

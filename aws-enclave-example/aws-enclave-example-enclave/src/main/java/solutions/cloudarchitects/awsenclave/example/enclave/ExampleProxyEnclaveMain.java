@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import solutions.cloudarchitects.awsenclave.enclave.SocketVSockProxy;
+import solutions.cloudarchitects.awsenclave.example.enclave.model.Request;
 import solutions.cloudarchitects.vsockj.ServerVSock;
 import solutions.cloudarchitects.vsockj.VSock;
 import solutions.cloudarchitects.vsockj.VSockAddress;
@@ -54,10 +55,9 @@ public class ExampleProxyEnclaveMain {
         try {
             while (true) {
                 try (VSock peerVSock = server.accept()) {
-                    byte[] b = new byte[4096];
-                    peerVSock.getInputStream().read(b, 0, 4096);
-                    EC2MetadataUtils.IAMSecurityCredential credential = MAPPER
-                            .readValue(b, EC2MetadataUtils.IAMSecurityCredential.class);
+                    byte[] b = new byte[8192];
+                    peerVSock.getInputStream().read(b, 0, 8192);
+                    Request request = MAPPER.readValue(b, Request.class);
 
                     try {
                         AWSKMS kmsClient = AWSKMSClientBuilder.standard()
@@ -82,7 +82,8 @@ public class ExampleProxyEnclaveMain {
                                     }
                                 })
                                 .withCredentials(new AWSStaticCredentialsProvider(
-                                        new BasicSessionCredentials(credential.accessKeyId, credential.secretAccessKey, credential.token)))
+                                        new BasicSessionCredentials(request.credential.accessKeyId,
+                                                request.credential.secretAccessKey, request.credential.token)))
                                 .build();
 
                         String enclaveKeyId = kmsClient.listAliases().getAliases().stream()

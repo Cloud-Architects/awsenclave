@@ -92,6 +92,7 @@
                         <classpath/>
                         <argument>solutions.cloudarchitects.awsenclave.example.host.ExampleProxyHostMain</argument>
                         <argument>${enclave.cid}</argument>
+                        <argument>${encrypted.text}</argument>
                     </arguments>
                 </configuration>
             </plugin>
