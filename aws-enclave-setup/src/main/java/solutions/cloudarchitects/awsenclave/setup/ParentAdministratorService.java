@@ -50,14 +50,15 @@ public final class ParentAdministratorService {
     }
 
     private void setupParent(KeyPair keyPair, String domainAddress) {
-        String setupScript = "sudo amazon-linux-extras enable aws-nitro-enclaves-cli\n" +
-                "sudo amazon-linux-extras enable docker\n" +
-                "sudo yum install docker aws-nitro-enclaves-cli aws-nitro-enclaves-cli-devel -y\n" +
-                "sudo usermod -aG ne " + EC2_USER + "\n" +
-                "sudo usermod -aG docker " + EC2_USER + "\n" +
-                "echo \"vm.nr_hugepages=1536\" | sudo tee /etc/sysctl.d/99-nitro.conf; sudo sysctl -p /etc/sysctl.d/99-nitro.conf\n" +
-                "sudo reboot\n" +
-                "exit\n";
+        String[] setupScript = {
+                "sudo amazon-linux-extras enable aws-nitro-enclaves-cli",
+                "sudo amazon-linux-extras enable docker",
+                "sudo yum install docker aws-nitro-enclaves-cli aws-nitro-enclaves-cli-devel -y",
+                "sudo usermod -aG ne " + EC2_USER,
+                "sudo usermod -aG docker " + EC2_USER,
+                "echo \"vm.nr_hugepages=1536\" | sudo tee /etc/sysctl.d/99-nitro.conf; sudo sysctl -p /etc/sysctl.d/99-nitro.conf",
+                "sudo reboot"
+        };
         try {
             LOG.info("waiting for parent setup");
             commandRunner.runCommand(keyPair, domainAddress, setupScript, false);
@@ -67,18 +68,19 @@ public final class ParentAdministratorService {
     }
 
     public void prepareSampleDockerImage(KeyPair keyPair, Ec2Instance ec2Instance) {
-        String setupScript = "nitro-cli --version\n" +
-                "sudo systemctl start nitro-enclaves-allocator.service && sudo systemctl enable nitro-enclaves-allocator.service\n" +
-                "sudo systemctl start docker && sudo systemctl enable docker\n" +
-                "sudo amazon-linux-extras enable corretto8\n" +
-                "sudo yum install java-1.8.0-amazon-corretto-devel git -y\n" +
+        String[] setupScript = {
+                "nitro-cli --version",
+                "sudo systemctl start nitro-enclaves-allocator.service && sudo systemctl enable nitro-enclaves-allocator.service",
+                "sudo systemctl start docker && sudo systemctl enable docker",
+                "sudo amazon-linux-extras enable corretto8",
+                "sudo yum install java-1.8.0-amazon-corretto-devel git -y",
 
-                "git clone https://github.com/Cloud-Architects/awsenclave\n" +
-                "cd awsenclave\n" +
-                "./mvnw -Dmaven.artifact.threads=30 install\n" +
-                "./mvnw -f aws-enclave-example/aws-enclave-example-enclave/pom.xml -Dmaven.artifact.threads=30 clean nar:nar-download nar:nar-unpack package jib:dockerBuild\n" +
-                "docker build deploy/enclave-proxy -t aws-enclave-example-enclave\n" +
-                "exit\n";
+                "git clone https://github.com/Cloud-Architects/awsenclave",
+                "cd awsenclave",
+                "./mvnw -Dmaven.artifact.threads=30 install",
+                "./mvnw -f aws-enclave-example/aws-enclave-example-enclave/pom.xml -Dmaven.artifact.threads=30 clean nar:nar-download nar:nar-unpack package jib:dockerBuild",
+                "docker build deploy/enclave-proxy -t aws-enclave-example-enclave"
+        };
 
         try {
             LOG.info("building Docker image");
@@ -89,8 +91,9 @@ public final class ParentAdministratorService {
     }
 
     public EnclaveMeasurements buildEnclave(KeyPair keyPair, Ec2Instance ec2Instance) {
-        String setupScript = "nitro-cli build-enclave --docker-uri aws-enclave-example-enclave:latest --output-file sample.eif\n" +
-                "exit\n";
+        String[] setupScript = {
+                "nitro-cli build-enclave --docker-uri aws-enclave-example-enclave:latest --output-file sample.eif"
+        };
         try {
             LOG.info("waiting to build an enclave");
             Optional<String> result = commandRunner
@@ -105,11 +108,11 @@ public final class ParentAdministratorService {
 
     public String runEnclave(KeyPair keyPair, Ec2Instance ec2Instance) {
         String enclaveId = "10";
-        String setupScript =
-                "echo 'vm.nr_hugepages=1536' | sudo tee /etc/sysctl.d/99-nitro.conf; sudo sysctl -p /etc/sysctl.d/99-nitro.conf\n" +
-                        String.format("nitro-cli run-enclave --cpu-count 2 --memory 3072 --eif-path sample.eif --enclave-cid %s --debug-mode\n", enclaveId) +
-                        "nitro-cli describe-enclaves\n" +
-                        "exit\n";
+        String[] setupScript = {
+                "echo 'vm.nr_hugepages=1536' | sudo tee /etc/sysctl.d/99-nitro.conf; sudo sysctl -p /etc/sysctl.d/99-nitro.conf",
+                String.format("nitro-cli run-enclave --cpu-count 2 --memory 3072 --eif-path sample.eif --enclave-cid %s --debug-mode", enclaveId),
+                "nitro-cli describe-enclaves",
+        };
         try {
             LOG.info("waiting to run an enclave");
             commandRunner.runCommand(keyPair, ec2Instance.getDomainAddress(), setupScript, false);
@@ -253,10 +256,7 @@ public final class ParentAdministratorService {
     }
 
     public void runVSockProxy(KeyPair keyPair, Ec2Instance ec2Instance, String domain) {
-        String setupScript =
-                "cd awsenclave\n" +
-                        String.format("nohup vsock-proxy 8443 %s 443 &\n", domain) +
-                        "exit\n";
+        String[] setupScript = {String.format("screen -d -m vsock-proxy 8443 %s 443", domain)};
         try {
             LOG.info("running vsock proxy");
             commandRunner.runCommand(keyPair, ec2Instance.getDomainAddress(), setupScript, false);
@@ -266,11 +266,10 @@ public final class ParentAdministratorService {
     }
 
     public void runHost(KeyPair keyPair, Ec2Instance ec2Instance, String enclaveCid) {
-        String setupScript =
-                "cd awsenclave\n" +
-                        String.format("./mvnw -f aws-enclave-example/aws-enclave-example-host/pom.xml compile exec:exec -Denclave.cid=%s\n", enclaveCid) +
-                        "exit\n" +
-                        "exit\n";
+        String[] setupScript = {
+                "cd awsenclave",
+                String.format("./mvnw -f aws-enclave-example/aws-enclave-example-host/pom.xml compile exec:exec -Denclave.cid=%s", enclaveCid)
+        };
         try {
             LOG.info("running host");
             commandRunner.runCommand(keyPair, ec2Instance.getDomainAddress(), setupScript, false);

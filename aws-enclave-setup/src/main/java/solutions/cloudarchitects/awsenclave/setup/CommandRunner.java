@@ -1,18 +1,13 @@
 package solutions.cloudarchitects.awsenclave.setup;
 
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
+import com.jcraft.jsch.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import solutions.cloudarchitects.awsenclave.setup.model.KeyPair;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -21,31 +16,33 @@ import static solutions.cloudarchitects.awsenclave.setup.ParentAdministratorServ
 public class CommandRunner {
     private static final Logger LOG = LoggerFactory.getLogger(CommandRunner.class);
 
-    public Optional<String> runCommand(KeyPair keyPair, String publicDNS, String script, boolean returnOutput)
+    public Optional<String> runCommand(KeyPair keyPair, String publicDNS, String[] script, boolean returnOutput)
             throws IOException, JSchException {
-        return runCommandRetry(keyPair, publicDNS, script, returnOutput, 10);
+        String command = String.join("; ", script);
+        return runCommandRetry(keyPair, publicDNS, command, returnOutput, 10);
     }
 
-    private Optional<String> runCommandRetry(KeyPair keyPair, String publicDNS, String script, boolean returnOutput, int retry)
-            throws JSchException, UnsupportedEncodingException {
+    private Optional<String> runCommandRetry(KeyPair keyPair, String publicDNS, String command, boolean returnOutput, int retry)
+            throws JSchException {
         try {
-            return executeCommand(keyPair, publicDNS, script, returnOutput);
-        } catch (JSchException connectException) {
+            return executeCommand(keyPair, publicDNS, command, returnOutput);
+        } catch (JSchException | IOException connectException) {
             if (retry > 0) {
                 try {
                     LOG.info("waiting to connect");
                     Thread.sleep(5_000);
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+                    LOG.warn(e.getMessage(), e);
                 }
-                return runCommandRetry(keyPair, publicDNS, script, returnOutput, retry - 1);
+                return runCommandRetry(keyPair, publicDNS, command, returnOutput, retry - 1);
             }
             throw new IllegalStateException("exceeded max retries");
         }
     }
 
-    private Optional<String> executeCommand(KeyPair keyPair, String publicDNS, String script, boolean returnOutput)
-            throws JSchException, UnsupportedEncodingException {
+    private Optional<String> executeCommand(KeyPair keyPair, String publicDNS, String command, boolean returnOutput)
+            throws JSchException, IOException {
+        LOG.info("Attempting to run command: " + command);
         JSch jsch = new JSch();
         try {
             jsch.addIdentity(keyPair.getKeyName(), keyPair.getKeyMaterial().getBytes(StandardCharsets.UTF_8),
@@ -59,33 +56,33 @@ public class CommandRunner {
         session.setConfig(configuration);
 
         session.connect();
-        Optional<String> result = runShell(session, script, returnOutput);
+        Optional<String> result = runExec(session, command, returnOutput);
         session.disconnect();
 
         return result;
     }
 
-    private Optional<String> runShell(Session session, String script, boolean returnOutput)
-            throws JSchException, UnsupportedEncodingException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        Channel channel = session.openChannel("shell");
-        if (returnOutput) {
-            channel.setOutputStream(baos);
-        } else {
-            channel.setOutputStream(System.out, true);
-        }
-        channel.setInputStream(new ByteArrayInputStream(script.getBytes(StandardCharsets.UTF_8)));
-        channel.connect();
+    private Optional<String> runExec(Session session, String command, boolean returnOutput)
+            throws JSchException, IOException {
+        Channel channel = session.openChannel("exec");
+        ((ChannelExec)channel).setCommand(command);
+        StringBuilder outputBuffer = new StringBuilder();
 
-        while (!channel.isClosed()) {
-            try {
-                Thread.sleep(1_000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        InputStream commandOutput = channel.getInputStream();
+        channel.connect();
+        int readByte = commandOutput.read();
+
+        while(readByte != 0xffffffff) {
+            if (returnOutput) {
+                outputBuffer.append((char)readByte);
+            } else {
+                System.out.print((char)readByte);
             }
+            readByte = commandOutput.read();
         }
+
         if (returnOutput) {
-            return Optional.of(baos.toString("UTF-8"));
+            return Optional.of(outputBuffer.toString());
         } else {
             return Optional.empty();
         }

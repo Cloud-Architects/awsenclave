@@ -45,7 +45,7 @@ class SetupMain {
 //            byte[] bytes = ownerService.encryptSample(keyId);
 //            // TODO: store sample data
 //
-//            ownerService.addPolicy(keyId, enclaveMeasurements);
+            ownerService.addPolicy(keyId, enclaveMeasurements);
         } finally {
             TerminateInstancesRequest tir = TerminateInstancesRequest.builder()
                     .instanceIds(ec2Instance.getInstanceId())
