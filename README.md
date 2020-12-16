@@ -25,7 +25,19 @@ To run the example Host + enclave setup and verify communication, run the follow
 ```shell
 ./mvnw -f aws-enclave-setup/pom.xml compile exec:exec
 ```
-The command should setup necessary resources and run a host application that encrypts a text, makes a request to a server in enclave with the ciphertext, enclave decrypts the ciphertext and returns decrypted plaintext.
+The command should:
+1. setup necessary resources (IAM role, KMS key, EC2 instance)
+
+2. As a data owner, encrypt a text
+
+3. As an administrator, run enclave,  KMS proxy and host application
+   
+4. Make host invoke a request to a server in enclave with the ciphertext
+   
+5. Make enclave decrypt the ciphertext and return decrypted plaintext.
+
+6. Display the decrypted text and remove the test EC2 instance
+
 
 Enclave server communicates with KMS through proxy. Communication enclave<->KMS uses HTTPS and is not accessible to host.
 
