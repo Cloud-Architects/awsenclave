@@ -268,7 +268,7 @@ public final class ParentAdministratorService {
     }
 
     public void runHost(KeyPair keyPair, Ec2Instance ec2Instance, String enclaveCid, byte[] bytes, String keyId) {
-        String encodedEncryptedText = new String(Base64.getEncoder().encode(bytes), StandardCharsets.UTF_8);
+        String encodedEncryptedText = new String(bytes, StandardCharsets.UTF_8);
         String[] setupScript = {
                 "cd awsenclave",
                 String.format("./mvnw -f aws-enclave-example/aws-enclave-example-host/pom.xml compile exec:exec " +
