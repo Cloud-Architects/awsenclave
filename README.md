@@ -25,7 +25,7 @@ To run the example Host + enclave setup and verify communication, run the follow
 ```shell
 ./mvnw -f aws-enclave-setup/pom.xml compile exec:exec
 ```
-The command should setup necessary resources and run a host application that calls a service in enclave to invoke a DescribeKey call to KMS.
+The command should setup necessary resources and run a host application that encrypts a text, makes a request to a server in enclave with the ciphertext, enclave decrypts the ciphertext and returns decrypted plaintext.
 
 For testing of the sample deployment, it's good to comment out instance termination in [SetupMain.java](https://github.com/Cloud-Architects/awsenclave/blob/main/aws-enclave-setup/src/main/java/solutions/cloudarchitects/awsenclave/setup/SetupMain.java#L52) and building the code locally with commands from `deploy/host/dev_setup.sh`.
 
