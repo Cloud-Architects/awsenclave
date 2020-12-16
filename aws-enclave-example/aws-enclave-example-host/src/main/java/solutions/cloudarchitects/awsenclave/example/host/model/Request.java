@@ -27,4 +27,13 @@ public class Request {
     public EC2MetadataUtils.IAMSecurityCredential getCredential() {
         return credential;
     }
+
+    @Override
+    public String toString() {
+        return "Request{" +
+                "encryptedText='" + encryptedText + '\'' +
+                ", keyId='" + keyId + '\'' +
+                ", credential=" + credential +
+                '}';
+    }
 }

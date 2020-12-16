@@ -60,7 +60,7 @@ public class ExampleProxyEnclaveMain {
                     byte[] b = new byte[8192];
                     peerVSock.getInputStream().read(b, 0, 8192);
                     Request request = MAPPER.readValue(b, Request.class);
-
+                    LOG.info(request.toString());
                     try {
                         AWSKMS kmsClient = getKmsClient(loopbackAddress, request);
                         byte[] decryptedSample = decryptSample(kmsClient, request);
