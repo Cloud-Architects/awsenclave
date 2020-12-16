@@ -81,7 +81,7 @@ public final class ParentAdministratorService {
                 "cd awsenclave",
                 "./mvnw -Dmaven.artifact.threads=30 install",
                 "./mvnw -f aws-enclave-example/aws-enclave-example-enclave/pom.xml -Dmaven.artifact.threads=30 clean nar:nar-download nar:nar-unpack package jib:dockerBuild",
-                "sed -i 's/ENCLAVE_REGION/" + region.id() + "/g' deploy/enclave-proxy/Dockerfile\n",
+                "sed -i 's/ENCLAVE_REGION/" + region.id() + "/g' deploy/enclave-proxy/Dockerfile",
                 "docker build deploy/enclave-proxy -t aws-enclave-example-enclave"
         };
 

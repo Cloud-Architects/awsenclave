@@ -68,6 +68,7 @@ public class CommandRunner {
         ((ChannelExec)channel).setCommand(command);
         StringBuilder outputBuffer = new StringBuilder();
 
+        ((ChannelExec) channel).setErrStream(System.err);
         InputStream commandOutput = channel.getInputStream();
         channel.connect();
         int readByte = commandOutput.read();
