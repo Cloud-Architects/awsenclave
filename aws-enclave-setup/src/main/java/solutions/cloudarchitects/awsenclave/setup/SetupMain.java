@@ -36,7 +36,7 @@ class SetupMain {
         KeyPair keyPair = parentAdministratorService.loadKey();
         Ec2Instance ec2Instance = parentAdministratorService.createParent(keyPair);
         try {
-            parentAdministratorService.prepareSampleDockerImage(keyPair, ec2Instance);
+            parentAdministratorService.prepareSampleDockerImage(keyPair, ec2Instance, region);
             EnclaveMeasurements enclaveMeasurements = parentAdministratorService.buildEnclave(keyPair, ec2Instance);
 
             String enclaveId = parentAdministratorService.runEnclave(keyPair, ec2Instance);

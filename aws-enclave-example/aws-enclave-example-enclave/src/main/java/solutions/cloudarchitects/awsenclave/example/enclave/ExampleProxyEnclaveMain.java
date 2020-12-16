@@ -29,7 +29,6 @@ import java.util.Base64;
 
 @SuppressWarnings({"InfiniteLoopStatement", "ResultOfMethodCallIgnored", "MismatchedReadAndWriteOfArray"})
 public class ExampleProxyEnclaveMain {
-    private static final String AWS_REGION = "ap-southeast-1";
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final Logger LOG = LoggerFactory.getLogger(ExampleProxyEnclaveMain.class);
 
@@ -54,6 +53,9 @@ public class ExampleProxyEnclaveMain {
         server.bind(new VSockAddress(VSockAddress.VMADDR_CID_ANY, 5000));
         LOG.info("Bound on Cid: " + server.getLocalCid());
 
+        String region = System.getenv("AWS_REGION");
+        LOG.info("Region: " + region);
+
         try {
             while (true) {
                 try (VSock peerVSock = server.accept()) {
@@ -62,7 +64,7 @@ public class ExampleProxyEnclaveMain {
                     Request request = MAPPER.readValue(b, Request.class);
                     LOG.info(request.toString());
                     try {
-                        AWSKMS kmsClient = getKmsClient(loopbackAddress, request);
+                        AWSKMS kmsClient = getKmsClient(loopbackAddress, request, region);
                         byte[] decryptedSample = decryptSample(kmsClient, request);
 
                         peerVSock.getOutputStream()
@@ -82,13 +84,13 @@ public class ExampleProxyEnclaveMain {
         }
     }
 
-    private static AWSKMS getKmsClient(InetAddress loopbackAddress, Request request) {
+    private static AWSKMS getKmsClient(InetAddress loopbackAddress, Request request, String region) {
         return AWSKMSClientBuilder.standard()
                 .withClientConfiguration(new ClientConfiguration()
                         .withDnsResolver(new SystemDefaultDnsResolver() {
                             @Override
                             public InetAddress[] resolve(String host) throws UnknownHostException {
-                                if ("kms.ap-southeast-1.amazonaws.com".equals(host)) {
+                                if (String.format("kms.%s.amazonaws.com", region).equals(host)) {
                                     return new InetAddress[]{loopbackAddress}; // for host redirection
                                 } else {
                                     return super.resolve(host);
@@ -96,7 +98,7 @@ public class ExampleProxyEnclaveMain {
                             }
                         }))
                 .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(
-                        "kms.ap-southeast-1.amazonaws.com:8443", AWS_REGION // for port redirection
+                        String.format("kms.%s.amazonaws.com:8443", region), region // for port redirection
                 ))
                 .withRequestHandlers(new RequestHandler2() {
                     @Override
