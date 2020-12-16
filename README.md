@@ -18,7 +18,7 @@ or
 ```
 
 ## aws-enclave-setup
-The setup right now supports one case - KMS proxy. An overview diagram is shown below:
+The setup right now supports one case - Enclave decryption. An overview diagram is shown below:
 ![proxy overview](docs/aws-enclave-proxy.png)
 
 To run the example Host + enclave setup and verify communication, run the following command (ensure default credentials allow you to create new EC2 instances, create IAM roles and KMS key):
@@ -26,6 +26,10 @@ To run the example Host + enclave setup and verify communication, run the follow
 ./mvnw -f aws-enclave-setup/pom.xml compile exec:exec
 ```
 The command should setup necessary resources and run a host application that encrypts a text, makes a request to a server in enclave with the ciphertext, enclave decrypts the ciphertext and returns decrypted plaintext.
+
+Enclave server communicates with KMS through proxy. Communication enclave<->KMS uses HTTPS and is not accessible to host.
+
+The example assumes no `kms:RecipientAttestation:ImageSha384` is passed nor verified by KMS.
 
 For testing of the sample deployment, it's good to comment out instance termination in [SetupMain.java](https://github.com/Cloud-Architects/awsenclave/blob/main/aws-enclave-setup/src/main/java/solutions/cloudarchitects/awsenclave/setup/SetupMain.java#L52) and building the code locally with commands from `deploy/host/dev_setup.sh`.
 
