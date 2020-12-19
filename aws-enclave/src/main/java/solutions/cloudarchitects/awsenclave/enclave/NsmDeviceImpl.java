@@ -13,7 +13,7 @@ public final class NsmDeviceImpl {
     public static final int MAX_NSM_REQUEST_SIZE = 4096;
 
     static {
-        System.loadLibrary("awsenclave-native-" + AwsEnclave.VERSION);
+        System.loadLibrary("aws-enclave-native-" + AwsEnclave.VERSION);
     }
     private final ObjectMapper mapper;
 

@@ -15,7 +15,7 @@ nitro-cli build-enclave --docker-uri aws-enclave-example-enclave:latest --output
 nitro-cli run-enclave --cpu-count 2 --memory 3072 --eif-path sample.eif --enclave-cid 10 --debug-mode
 nitro-cli console --enclave-id $(nitro-cli describe-enclaves | jq -r ".[0].EnclaveID")
 
-./mvnw -f aws-enclave-example/aws-enclave-example-host/pom.xml compile exec:exec -Denclave.cid=10
+./mvnw -f aws-enclave-example/aws-enclave-example-host/pom.xml compile exec:exec -Denclave.cid=10 -Dencrypted.text=sth -Dkey.id=123
 nitro-cli describe-enclaves
 nitro-cli terminate-enclave --all
 
