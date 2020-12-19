@@ -46,6 +46,8 @@ The example assumes no `kms:RecipientAttestation:ImageSha384` is passed nor veri
 
 For testing of the sample deployment, it's good to comment out instance termination in [SetupMain.java](https://github.com/Cloud-Architects/awsenclave/blob/main/aws-enclave-setup/src/main/java/solutions/cloudarchitects/awsenclave/setup/SetupMain.java#L52) and building the code locally with commands from `deploy/host/dev_setup.sh`.
 
+`aws-enclave-setup` is intended only to perform a showcase of Nitro Enclaves and aws-enclave and vsockj libraries. It's not in the scope of the project to provide infrastructure recommendations.
+
 ## aws-enclave-example-enclave
 To build (preferable run from host or other linux):
 ```shell
