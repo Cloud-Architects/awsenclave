@@ -6,12 +6,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import solutions.cloudarchitects.awsenclave.enclave.EnclaveServer;
+import solutions.cloudarchitects.awsenclave.enclave.NsmDevice;
 import solutions.cloudarchitects.awsenclave.example.enclave.model.Request;
 import solutions.cloudarchitects.vsockj.VSock;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 @SuppressWarnings({"InfiniteLoopStatement", "ResultOfMethodCallIgnored", "MismatchedReadAndWriteOfArray"})
@@ -26,7 +28,9 @@ public class ExampleProxyEnclaveMain {
 
         InetAddress loopbackAddress = InetAddress.getLoopbackAddress();
 
-        EnclaveServer server = new EnclaveServer(loopbackAddress);
+        NsmDevice nsmDevice = new NsmDevice();
+        EnclaveServer server = new EnclaveServer(loopbackAddress, nsmDevice);
+
         server.runServer(peerVSock -> {
             try {
                 handleVsockRequest(region, peerVSock, server);
@@ -38,7 +42,9 @@ public class ExampleProxyEnclaveMain {
         server.runProxyServer(KMS_SERVER_PORT);
     }
 
-    private static void handleVsockRequest(String region, VSock peerVSock, EnclaveServer enclaveServer) throws IOException {
+    private static void handleVsockRequest(
+            String region, VSock peerVSock, EnclaveServer enclaveServer)
+            throws IOException {
         byte[] b = new byte[8192];
         peerVSock.getInputStream().read(b, 0, 8192);
         Request request = MAPPER.readValue(b, Request.class);
@@ -48,7 +54,8 @@ public class ExampleProxyEnclaveMain {
             byte[] decryptedSample = decryptSample(kmsClient, request);
 
             peerVSock.getOutputStream()
-                    .write(decryptedSample);
+                    .write((enclaveServer.getPcr0() + new String(decryptedSample, StandardCharsets.UTF_8))
+                            .getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
             LOG.warn(e.getMessage(), e);
             peerVSock.getOutputStream()

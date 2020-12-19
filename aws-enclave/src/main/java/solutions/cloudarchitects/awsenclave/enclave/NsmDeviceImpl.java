@@ -19,7 +19,7 @@ public final class NsmDeviceImpl {
 
     int fd = -1;
 
-    public NsmDeviceImpl() {
+    NsmDeviceImpl() {
         CBORFactory f = new CBORFactory();
         this.mapper = new ObjectMapper(f);
     }
