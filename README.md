@@ -8,8 +8,9 @@ The project requires [vsockj](https://app.circleci.com/pipelines/github/Cloud-Ar
 When developing and running locally, ensure latest jars are in your local mvn repo.
 
 ```shell
+docker build -t maven-gcc - < Dockerfile-build
 docker run -w /app -v "$HOME/.m2":/app/.m2 -v "$PWD":/app -ti --rm -u `id -u` \
-amazoncorretto:8u275 ./mvnw -Dmaven.repo.local=/app/.m2/repository compile install
+maven-gcc ./mvnw -Dmaven.repo.local=/app/.m2/repository compile install
 ```
 
 or

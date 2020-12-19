@@ -75,7 +75,7 @@ public final class ParentAdministratorService {
                 "sudo systemctl start nitro-enclaves-allocator.service && sudo systemctl enable nitro-enclaves-allocator.service",
                 "sudo systemctl start docker && sudo systemctl enable docker",
                 "sudo amazon-linux-extras enable corretto8",
-                "sudo yum install java-1.8.0-amazon-corretto-devel git -y",
+                "sudo yum install java-1.8.0-amazon-corretto-devel git gcc-c++ -y",
 
                 "git clone https://github.com/Cloud-Architects/awsenclave",
                 "cd awsenclave",
@@ -162,7 +162,7 @@ public final class ParentAdministratorService {
                 .instanceId();
 
         String publicDNS = "";
-        String publicIP = "";
+        String publicIP;
         for (Reservation reservation : amazonEC2Client.describeInstances().reservations()) {
             if (reservation.instances().get(0).privateIpAddress() != null &&
                     reservation.instances().get(0).instanceId().equals(createdInstanceId)) {
