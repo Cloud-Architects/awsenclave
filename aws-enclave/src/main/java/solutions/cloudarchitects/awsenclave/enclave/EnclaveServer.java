@@ -41,6 +41,7 @@ public class EnclaveServer implements Closeable {
     }
 
     public void runServer(Consumer<VSock> requestConsumer) {
+        nsmDevice.initialize();
         new Thread(() -> {
             try {
                 this.runServerThreaded(requestConsumer);
@@ -48,7 +49,6 @@ public class EnclaveServer implements Closeable {
                 LOG.warn(e.getMessage(), e);
             }
         }).start();
-        nsmDevice.initialize();
     }
 
     public void runProxyServer(int port) throws IOException {
