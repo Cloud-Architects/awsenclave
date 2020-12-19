@@ -122,7 +122,7 @@
                 <configuration>
                     <executable>java</executable>
                     <arguments>
-                        <argument>-Djava.library.path=target/nar/lib/amd64-Linux-gpp/jni</argument>
+                        <argument>-Djava.library.path=target/aws-enclave-native-1.0-SNAPSHOT-amd64-Linux-gpp-jni/nar/lib/amd64-Linux-gpp/jni:target/vsockj-native-1.0-SNAPSHOT-amd64-Linux-gpp-jni/nar/lib/amd64-Linux-gpp/jni</argument>
                         <argument>-classpath</argument>
                         <!-- automatically creates the classpath using all project dependencies,
                              also adding the project build directory -->
