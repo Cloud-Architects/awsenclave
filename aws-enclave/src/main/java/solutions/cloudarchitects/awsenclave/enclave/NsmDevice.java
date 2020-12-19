@@ -6,7 +6,6 @@ import solutions.cloudarchitects.awsenclave.enclave.model.request.DescribePCRReq
 import solutions.cloudarchitects.awsenclave.enclave.model.response.DescribePCRResponse;
 
 import java.io.Closeable;
-import java.io.IOException;
 
 public final class NsmDevice implements Closeable {
     private boolean closed = false;
@@ -18,6 +17,7 @@ public final class NsmDevice implements Closeable {
         if (!initialized) {
             implementation = new NsmDeviceImpl();
             implementation.initialize();
+            initialized = true;
         }
     }
 
