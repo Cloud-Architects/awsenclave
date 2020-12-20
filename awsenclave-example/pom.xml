@@ -4,16 +4,20 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>awsenclave-parent</artifactId>
-        <groupId>solutions.cloudarchitects.aws-enclave</groupId>
+        <groupId>solutions.cloudarchitects.awsenclave</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>aws-enclave-host</artifactId>
+    <artifactId>awsenclave-example</artifactId>
+    <packaging>pom</packaging>
+    <modules>
+        <module>awsenclave-example-host</module>
+        <module>awsenclave-example-enclave</module>
+    </modules>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
     </properties>
-
 </project>

@@ -18,13 +18,13 @@ or
 ./mvnw compile install
 ```
 
-## aws-enclave-setup
+## awsenclave-setup
 The setup right now supports one case - Enclave decryption. An overview diagram is shown below:
-![proxy overview](docs/aws-enclave-proxy.png)
+![proxy overview](docs/awsenclave-proxy.png)
 
 To run the example Host + enclave setup and verify communication, run the following command (ensure default credentials allow you to create new EC2 instances, create IAM roles and KMS key):
 ```shell
-./mvnw -f aws-enclave-setup/pom.xml compile exec:exec
+./mvnw -f awsenclave-setup/pom.xml compile exec:exec
 ```
 The command should:
 1. setup necessary resources (IAM role, KMS key, EC2 instance)
@@ -44,33 +44,33 @@ Enclave server communicates with KMS through proxy. Communication enclave<->KMS 
 
 The example assumes no `kms:RecipientAttestation:ImageSha384` is passed nor verified by KMS.
 
-For testing of the sample deployment, it's good to comment out instance termination in [SetupMain.java](https://github.com/Cloud-Architects/awsenclave/blob/main/aws-enclave-setup/src/main/java/solutions/cloudarchitects/awsenclave/setup/SetupMain.java#L52) and building the code locally with commands from `deploy/host/dev_setup.sh`.
+For testing of the sample deployment, it's good to comment out instance termination in [SetupMain.java](https://github.com/Cloud-Architects/awsenclave/blob/main/awsenclave-setup/src/main/java/solutions/cloudarchitects/awsenclave/setup/SetupMain.java#L52) and building the code locally with commands from `deploy/host/dev_setup.sh`.
 
-`aws-enclave-setup` is intended only to perform a showcase of Nitro Enclaves and aws-enclave and vsockj libraries. It's not in the scope of the project to provide infrastructure recommendations.
+`awsenclave-setup` is intended only to perform a showcase of Nitro Enclaves and awsenclave and vsockj libraries. It's not in the scope of the project to provide infrastructure recommendations.
 
-## aws-enclave-example-enclave
+## awsenclave-example-enclave
 To build (preferable run from host or other linux):
 ```shell
-./mvnw -f aws-enclave-example/aws-enclave-example-enclave/pom.xml clean nar:nar-unpack package jib:dockerBuild
+./mvnw -f awsenclave-example/awsenclave-example-enclave/pom.xml clean nar:nar-unpack package jib:dockerBuild
 ```
 
 If not working on Linux:
 ```shell
 docker run -w /app -v "$HOME/.m2":/app/.m2 -v "$PWD":/app -ti --rm -u `id -u` \
-amazoncorretto:8u275 ./mvnw -Dmaven.repo.local=/app/.m2/repository -f aws-enclave-example/aws-enclave-example-enclave/pom.xml \
+amazoncorretto:8u275 ./mvnw -Dmaven.repo.local=/app/.m2/repository -f awsenclave-example/awsenclave-example-enclave/pom.xml \
 clean nar:nar-unpack package
 
 
-./mvnw -f aws-enclave-example/aws-enclave-example-enclave/pom.xml compile  jib:dockerBuild
+./mvnw -f awsenclave-example/awsenclave-example-enclave/pom.xml compile  jib:dockerBuild
 ```
 
 To test locally:
 ```shell
-docker run aws-enclave-example-enclave:latest
+docker run awsenclave-example-enclave:latest
 ```
 or
 ```shell
-./mvnw -f aws-enclave-example/aws-enclave-example-enclave/pom.xml compile exec:exec
+./mvnw -f awsenclave-example/awsenclave-example-enclave/pom.xml compile exec:exec
 ```
 
 To show logs in a running enclave:
@@ -78,15 +78,15 @@ To show logs in a running enclave:
 nitro-cli console --enclave-id [enclave-id]
 ```
 
-## aws-enclave-example-host
+## awsenclave-example-host
 To test locally:
 ```shell
-./mvnw -f aws-enclave-example/aws-enclave-example-host/pom.xml compile exec:exec -Denclave.cid=[CID] -Dencrypted.text=[base 64 encrypted text] -Dkey.id=[key id]
+./mvnw -f awsenclave-example/awsenclave-example-host/pom.xml compile exec:exec -Denclave.cid=[CID] -Dencrypted.text=[base 64 encrypted text] -Dkey.id=[key id]
 ```
 
 ```shell
 docker run -w /app -v "$HOME/.m2":/app/.m2 -v "$PWD":/app -ti --rm -u `id -u` \
-amazoncorretto:8u275 ./mvnw -Dmaven.repo.local=/app/.m2/repository -f aws-enclave-example/aws-enclave-example-host/pom.xml \
+amazoncorretto:8u275 ./mvnw -Dmaven.repo.local=/app/.m2/repository -f awsenclave-example/awsenclave-example-host/pom.xml \
 compile exec:exec -Denclave.cid=23
 ```
 

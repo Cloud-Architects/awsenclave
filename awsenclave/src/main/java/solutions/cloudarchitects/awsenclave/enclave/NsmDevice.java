@@ -6,6 +6,7 @@ import solutions.cloudarchitects.awsenclave.enclave.model.request.DescribePCRReq
 import solutions.cloudarchitects.awsenclave.enclave.model.response.DescribePCRResponse;
 
 import java.io.Closeable;
+import java.util.Base64;
 
 public final class NsmDevice implements Closeable {
     private boolean closed = false;
@@ -21,12 +22,11 @@ public final class NsmDevice implements Closeable {
         }
     }
 
-    public DescribePCRResponse describePCR(DescribePCRRequest request) {
+    public byte[] describePCR0() {
         checkState();
 
-        NsmResponse nsmResponse = implementation.processRequest(new NsmRequest(request));
-
-        return nsmResponse.getDescribePCR();
+        String getPcr0Request = "oWtEZXNjcmliZVBDUqFlaW5kZXgA";
+        return implementation.processRequestInternal(Base64.getDecoder().decode(getPcr0Request));
     }
 
     private void checkState() {

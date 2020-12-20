@@ -46,4 +46,4 @@ basic_commands2.sh
 host_key_pair.json
 *.pem
 
-aws-enclave/**/*.h
+awsenclave/**/*.h

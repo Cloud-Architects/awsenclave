@@ -25,6 +25,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.function.Consumer;
 
 @SuppressWarnings("InfiniteLoopStatement")
@@ -85,9 +86,8 @@ public class EnclaveServer implements Closeable {
     }
 
     public String getPcr0() {
-        DescribePCRResponse describePCRResponse = nsmDevice.describePCR(new DescribePCRRequest((short) 0));
-        String pcr0 = new String(describePCRResponse.getData(), StandardCharsets.UTF_8);
-        return pcr0;
+        byte[] bytes = nsmDevice.describePCR0();
+        return Base64.getEncoder().encodeToString(bytes);
     }
 
     public AWSKMS getKmsClient(EC2MetadataUtils.IAMSecurityCredential credential, String region) {

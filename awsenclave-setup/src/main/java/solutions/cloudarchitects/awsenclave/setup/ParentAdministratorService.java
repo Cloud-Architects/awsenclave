@@ -80,9 +80,9 @@ public final class ParentAdministratorService {
                 "git clone https://github.com/Cloud-Architects/awsenclave",
                 "cd awsenclave",
                 "./mvnw -Dmaven.artifact.threads=30 install",
-                "./mvnw -f aws-enclave-example/aws-enclave-example-enclave/pom.xml -Dmaven.artifact.threads=30 clean nar:nar-download nar:nar-unpack package jib:dockerBuild",
+                "./mvnw -f awsenclave-example/awsenclave-example-enclave/pom.xml -Dmaven.artifact.threads=30 clean nar:nar-download nar:nar-unpack package jib:dockerBuild",
                 "sed -i 's/ENCLAVE_REGION/" + region.id() + "/g' deploy/enclave-proxy/Dockerfile",
-                "docker build deploy/enclave-proxy -t aws-enclave-example-enclave"
+                "docker build deploy/enclave-proxy -t awsenclave-example-enclave"
         };
 
         try {
@@ -95,7 +95,7 @@ public final class ParentAdministratorService {
 
     public EnclaveMeasurements buildEnclave(KeyPair keyPair, Ec2Instance ec2Instance) {
         String[] setupScript = {
-                "nitro-cli build-enclave --docker-uri aws-enclave-example-enclave:latest --output-file sample.eif"
+                "nitro-cli build-enclave --docker-uri awsenclave-example-enclave:latest --output-file sample.eif"
         };
         try {
             LOG.info("waiting to build an enclave");
@@ -268,7 +268,7 @@ public final class ParentAdministratorService {
         String encodedEncryptedText = new String(bytes, StandardCharsets.UTF_8);
         String[] setupScript = {
                 "cd awsenclave",
-                String.format("./mvnw -f aws-enclave-example/aws-enclave-example-host/pom.xml compile exec:exec " +
+                String.format("./mvnw -f awsenclave-example/awsenclave-example-host/pom.xml compile exec:exec " +
                         "-Denclave.cid=%s -Dencrypted.text=%s -Dkey.id=%s", enclaveCid, encodedEncryptedText, keyId)
         };
         try {
