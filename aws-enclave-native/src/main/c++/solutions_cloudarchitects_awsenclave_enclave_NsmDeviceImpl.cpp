@@ -63,9 +63,12 @@ JNIEXPORT jbyteArray JNICALL Java_solutions_cloudarchitects_awsenclave_enclave_N
     message.response.iov_base = (void *) &RESPONSE;
     message.response.iov_len = NSM_RESPONSE_MAX_SIZE;
 
-    ioctl(fd, _IOWR(NSM_IOCTL_MAGIC, 0, sizeof(nsm_message_t)), &message);
-
+    int status = ioctl(fd, _IOWR(NSM_IOCTL_MAGIC, 0, sizeof(nsm_message_t)), &message);
     env->ReleaseByteArrayElements(request, request_bytes, JNI_ABORT);
+
+    if (status != 0) {
+       env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), ("Error while contacting NSM: " + std::to_string(status)).c_str());
+    }
 
     jbyteArray response = env->NewByteArray((jsize) message.response.iov_len);
     env->SetByteArrayRegion(response, 0, (jsize) message.response.iov_len, (const jbyte*) message.response.iov_base);
