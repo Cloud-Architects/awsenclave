@@ -67,7 +67,19 @@ JNIEXPORT jbyteArray JNICALL Java_solutions_cloudarchitects_awsenclave_enclave_N
     env->ReleaseByteArrayElements(request, request_bytes, JNI_ABORT);
 
     if (status != 0) {
-       env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), ("Error while contacting NSM: " + std::to_string(status)).c_str());
+        if (errno == EMSGSIZE) {
+            env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), "Input too large");
+        } else if (errno == EBADF) {
+            env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), "Invalid file descriptor");
+        } else if (errno == EFAULT) {
+            env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), "Inaccessible memory area reference");
+        } else if (errno == EINVAL) {
+            env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), "Invalid request");
+        } else if (errno == ENOTTY) {
+            env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), "Not a character special device");
+        } else  {
+            env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), ("Error while contacting NSM: " + std::to_string(status)).c_str());
+        }
     }
 
     jbyteArray response = env->NewByteArray((jsize) message.response.iov_len);

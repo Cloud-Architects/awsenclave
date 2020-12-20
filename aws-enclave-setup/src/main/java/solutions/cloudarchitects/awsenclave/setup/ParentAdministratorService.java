@@ -29,7 +29,7 @@ public final class ParentAdministratorService {
     private static final String HOST_PRIVATE_KEY_NAME = "host_key_pair.json";
     private static final String ENCLAVE_PARENT_PROFILE = "enclaveParentProfile";
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final Logger LOG = LoggerFactory.getLogger(CommandRunner.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ParentAdministratorService.class);
 
     private final Ec2Client amazonEC2Client;
     private final AmazonIdentityManagement iamClient;
@@ -162,14 +162,10 @@ public final class ParentAdministratorService {
                 .instanceId();
 
         String publicDNS = "";
-        String publicIP;
         for (Reservation reservation : amazonEC2Client.describeInstances().reservations()) {
             if (reservation.instances().get(0).privateIpAddress() != null &&
                     reservation.instances().get(0).instanceId().equals(createdInstanceId)) {
                 publicDNS = reservation.instances().get(0).publicDnsName();
-                publicIP = reservation.instances().get(0).publicIpAddress();
-                LOG.info("Public DNS: " + publicDNS);
-                LOG.info("Public IP: " + publicIP);
             }
         }
 
