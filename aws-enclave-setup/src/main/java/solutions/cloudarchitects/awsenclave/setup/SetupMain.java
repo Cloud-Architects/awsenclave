@@ -48,12 +48,14 @@ class SetupMain {
             ownerService.addPolicy(keyId, enclaveMeasurements, currentUserArn);
 
             parentAdministratorService.runHost(keyPair, ec2Instance, enclaveId, bytes, keyId);
+            LOG.info("Instance ID: " + ec2Instance.getInstanceId());
+            LOG.info("Public DNS: " + ec2Instance.getDomainAddress());
         } finally {
-            TerminateInstancesRequest tir = TerminateInstancesRequest.builder()
-                    .instanceIds(ec2Instance.getInstanceId())
-                    .build();
-            LOG.info("terminating instance: " + ec2Instance);
-            ec2Client.terminateInstances(tir);
+//            TerminateInstancesRequest tir = TerminateInstancesRequest.builder()
+//                    .instanceIds(ec2Instance.getInstanceId())
+//                    .build();
+//            LOG.info("terminating instance: " + ec2Instance);
+//            ec2Clientient.terminateInstances(tir);
         }
     }
 }

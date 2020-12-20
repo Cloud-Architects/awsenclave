@@ -53,8 +53,16 @@ public class ExampleProxyEnclaveMain {
             AWSKMS kmsClient = enclaveServer.getKmsClient(request.getCredential(), region);
             byte[] decryptedSample = decryptSample(kmsClient, request);
 
+            String pcr0;
+            try {
+                pcr0 = enclaveServer.getPcr0();
+            } catch (Exception e) {
+                LOG.warn(e.getMessage(), e);
+                pcr0 = String.format("Couldn't get PCR0 (%s)", e.getMessage());
+            }
+
             peerVSock.getOutputStream()
-                    .write((enclaveServer.getPcr0() + new String(decryptedSample, StandardCharsets.UTF_8))
+                    .write((pcr0 + new String(decryptedSample, StandardCharsets.UTF_8))
                             .getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
             LOG.warn(e.getMessage(), e);
