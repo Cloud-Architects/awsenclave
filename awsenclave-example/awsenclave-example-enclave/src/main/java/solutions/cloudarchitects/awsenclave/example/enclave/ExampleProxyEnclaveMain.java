@@ -60,10 +60,10 @@ public class ExampleProxyEnclaveMain {
                 LOG.warn(e.getMessage(), e);
                 pcr0 = String.format("Couldn't get PCR0 (%s)", e.getMessage());
             }
+            LOG.info(pcr0);
 
             peerVSock.getOutputStream()
-                    .write((pcr0 + new String(decryptedSample, StandardCharsets.UTF_8))
-                            .getBytes(StandardCharsets.UTF_8));
+                    .write(decryptedSample);
         } catch (Exception e) {
             LOG.warn(e.getMessage(), e);
             peerVSock.getOutputStream()
